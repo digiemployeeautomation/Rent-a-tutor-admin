@@ -109,7 +109,7 @@ export default function TutorsPage() {
     setLoading(true)
     const [{ data: t }, { data: l }] = await Promise.all([
       supabase.from('tutors')
-        .select('id,is_featured,badge,subjects,hourly_rate_kwacha,avg_rating,total_reviews,created_at,profiles(full_name)')
+        .select('id,user_id,is_featured,badge,subjects,hourly_rate_kwacha,avg_rating,total_reviews,created_at,profiles(full_name)')
         .eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('lessons')
         .select('id,title,subject,form_level,price,status,flagged,flag_reason,cloudflare_video_id,purchase_count,created_at,tutor_id,tutors(profiles(full_name))')
@@ -129,8 +129,11 @@ export default function TutorsPage() {
 
   async function revokeTutor(id) {
     if (!window.confirm('Revoke this tutor\'s approval? Their lessons will be hidden.')) return
+    const tutor = tutors.find(t => t.id === id)
     await supabase.from('tutors').update({ is_approved: false }).eq('id', id)
-    await supabase.from('lessons').update({ status: 'draft' }).eq('tutor_id', id)
+    if (tutor?.user_id) {
+      await supabase.from('lessons').update({ status: 'draft' }).eq('tutor_id', tutor.user_id)
+    }
     setTutors(prev => prev.filter(t => t.id !== id))
   }
 
