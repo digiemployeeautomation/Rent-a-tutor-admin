@@ -53,7 +53,7 @@ export default function DashboardPage() {
         supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('reviews').select('*', { count: 'exact', head: true }),
         supabase.from('lesson_purchases').select('amount_paid').gte('purchased_at', new Date(Date.now() - 30 * 86400000).toISOString()),
-        supabase.from('tutors').select('id, created_at, subjects, profiles(full_name)').eq('is_approved', false).order('created_at', { ascending: false }).limit(5),
+        supabase.from('tutors').select('id, user_id, created_at, subjects, profiles(full_name)').eq('is_approved', false).order('created_at', { ascending: false }).limit(5),
         supabase.from('reports').select('id, reason, reported_type, created_at, profiles!reporter_id(full_name)').eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
         supabase.from('lessons').select('id, title, subject, status, created_at, tutors(profiles(full_name))').order('created_at', { ascending: false }).limit(6),
         supabase.from('reviews').select('id, rating, comment, created_at, profiles(full_name), tutors(profiles(full_name))').order('created_at', { ascending: false }).limit(4),
@@ -70,8 +70,12 @@ export default function DashboardPage() {
   }, [])
 
   async function approveTutor(id) {
+    // Look up user_id for this tutor (lessons.tutor_id = auth user id, not tutors.id)
+    const tutor = pendingTutors.find(t => t.id === id)
     await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
-    await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', id).eq('status', 'draft')
+    if (tutor?.user_id) {
+      await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
+    }
     setPending(p => p.filter(t => t.id !== id))
     setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
   }
