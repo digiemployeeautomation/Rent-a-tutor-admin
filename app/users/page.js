@@ -43,7 +43,7 @@ function UserDetailModal({ user: u, onClose }) {
               </div>
               <div>
                 <p className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{u.full_name ?? '—'}</p>
-                <p className="text-xs" style={{ color: '#9ca3af' }}>{u.email} · Joined {fmt(u.created_at)}</p>
+                <p className="text-xs" style={{ color: '#9ca3af' }}>Joined {fmt(u.created_at)}</p>
               </div>
             </div>
             <button onClick={onClose} className="text-xl" style={{ color: '#9ca3af' }}>✕</button>
