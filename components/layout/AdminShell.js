@@ -5,17 +5,18 @@ import Sidebar from './Sidebar'
 import { supabase } from '@/lib/supabase'
 
 const PAGE_TITLES = {
-  '/dashboard':     'Dashboard',
-  '/registrations': 'Tutor Applications',
-  '/tutors':        'Tutors & Lessons',
-  '/reports':       'Reports & Complaints',
-  '/reviews':       'Student Reviews',
-  '/analytics':     'Analytics',
-  '/payments':      'Payments & Payouts',
-  '/users':         'Users',
-  '/announcements': 'Announcements',
-  '/coupons':       'Coupons',
-  '/bundles':       'Exam Prep Bundles',
+  '/dashboard':      'Dashboard',
+  '/registrations':  'Tutor Applications',
+  '/tutors':         'Tutors & Lessons',
+  '/reports':        'Reports & Complaints',
+  '/reviews':        'Student Reviews',
+  '/analytics':      'Analytics',
+  '/payments':       'Payments & Payouts',
+  '/users':          'Users',
+  '/announcements':  'Announcements',
+  '/coupons':        'Coupons',
+  '/bundles':        'Exam Prep Bundles',
+  '/topic-requests': 'Topic Requests',
 }
 
 export default function AdminShell({ children }) {
