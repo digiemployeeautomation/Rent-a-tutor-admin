@@ -26,7 +26,8 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
   useEffect(() => {
     Promise.all([
       supabase.from('tutor_documents').select('*').eq('tutor_id', tutor.id).order('uploaded_at', { ascending: false }),
-      supabase.from('lessons').select('id,title,subject,form_level,price,status,cloudflare_video_id,created_at').eq('tutor_id', tutor.id).order('created_at', { ascending: false }),
+      // lessons.tutor_id = auth user id (not tutors.id) — use user_id if available, fallback to id
+      supabase.from('lessons').select('id,title,subject,form_level,price,status,cloudflare_video_id,created_at').eq('tutor_id', tutor.user_id ?? tutor.id).order('created_at', { ascending: false }),
       supabase.from('application_notes').select('*,profiles(full_name)').eq('tutor_id', tutor.id).order('created_at', { ascending: true }),
     ]).then(([{ data: d }, { data: l }, { data: n }]) => {
       setDocs(d ?? [])
@@ -292,7 +293,7 @@ export default function RegistrationsPage() {
 
     let query = supabase
       .from('tutors')
-      .select('id,is_approved,subjects,hourly_rate_kwacha,bio,phone,location,years_experience,qualification,rejection_reason,created_at,profiles(full_name,avatar_url)')
+      .select('id,user_id,is_approved,subjects,hourly_rate_kwacha,bio,phone,location,years_experience,qualification,rejection_reason,created_at,profiles(full_name,avatar_url)')
       .order('created_at', { ascending: false })
 
     if (tab === 'pending')  query = query.eq('is_approved', false).is('rejection_reason', null)
@@ -307,8 +308,11 @@ export default function RegistrationsPage() {
   useEffect(() => { load() }, [load])
 
   async function approveTutor(id) {
+    const tutor = tutors.find(t => t.id === id)
     await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
-    await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', id).eq('status', 'draft')
+    if (tutor?.user_id) {
+      await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
+    }
     await supabase.from('admin_log').insert({ action: 'approve_tutor', target_type: 'tutor', target_id: id })
     load()
   }
