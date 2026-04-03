@@ -53,7 +53,7 @@ function UserDetailModal({ user: u, onClose }) {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
-            {u.role === 'student' ? [
+            {(u.role === 'student' ? [
               { label: 'Purchases',   value: activity?.purchases?.length ?? '—' },
               { label: 'Sessions',    value: activity?.bookings?.length ?? '—' },
               { label: 'Spent',       value: activity?.purchases ? `K${activity.purchases.reduce((s, p) => s + (p.amount_paid ?? 0), 0)}` : '—' },
