@@ -38,10 +38,17 @@ export default function AdminShell({ children }) {
 
       setAdmin({ ...user, full_name: profile?.full_name })
 
-      // Load badge counts
+      // FIX: Only count tutors that are genuinely pending review —
+      // i.e. not approved AND have no rejection_reason (rejected tutors also
+      // have is_approved=false but should not show in the pending badge).
       const [{ count: pendingTutors }, { count: openReports }] = await Promise.all([
-        supabase.from('tutors').select('*', { count: 'exact', head: true }).eq('is_approved', false),
-        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('tutors')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_approved', false)
+          .is('rejection_reason', null),
+        supabase.from('reports')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending'),
       ])
 
       setBadges({ pending_tutors: pendingTutors ?? 0, open_reports: openReports ?? 0 })
@@ -62,7 +69,7 @@ export default function AdminShell({ children }) {
     )
   }
 
-  const title   = PAGE_TITLES[pathname] ?? 'Admin'
+  const title    = PAGE_TITLES[pathname] ?? 'Admin'
   const initials = admin?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? 'AD'
 
   return (
