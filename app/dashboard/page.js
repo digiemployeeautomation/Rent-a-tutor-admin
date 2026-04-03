@@ -35,6 +35,8 @@ export default function DashboardPage() {
     async function load() {
       const [
         { count: approvedTutors },
+        // FIX: Only count genuinely pending tutors (not rejected ones).
+        // Rejected tutors also have is_approved=false but have rejection_reason set.
         { count: pendingCount },
         { count: students },
         { count: lessons },
@@ -47,13 +49,20 @@ export default function DashboardPage() {
         { data: reviewRows },
       ] = await Promise.all([
         supabase.from('tutors').select('*', { count: 'exact', head: true }).eq('is_approved', true),
-        supabase.from('tutors').select('*', { count: 'exact', head: true }).eq('is_approved', false),
+        supabase.from('tutors').select('*', { count: 'exact', head: true })
+          .eq('is_approved', false)
+          .is('rejection_reason', null),   // ← exclude rejected
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
         supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('reviews').select('*', { count: 'exact', head: true }),
         supabase.from('lesson_purchases').select('amount_paid').gte('purchased_at', new Date(Date.now() - 30 * 86400000).toISOString()),
-        supabase.from('tutors').select('id, user_id, created_at, subjects, profiles(full_name)').eq('is_approved', false).order('created_at', { ascending: false }).limit(5),
+        supabase.from('tutors')
+          .select('id, user_id, created_at, subjects, profiles(full_name)')
+          .eq('is_approved', false)
+          .is('rejection_reason', null)    // ← only true pending in the preview list
+          .order('created_at', { ascending: false })
+          .limit(5),
         supabase.from('reports').select('id, reason, reported_type, created_at, profiles!reporter_id(full_name)').eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
         supabase.from('lessons').select('id, title, subject, status, created_at, tutors(profiles(full_name))').order('created_at', { ascending: false }).limit(6),
         supabase.from('reviews').select('id, rating, comment, created_at, profiles(full_name), tutors(profiles(full_name))').order('created_at', { ascending: false }).limit(4),
@@ -70,9 +79,9 @@ export default function DashboardPage() {
   }, [])
 
   async function approveTutor(id) {
-    // Look up user_id for this tutor (lessons.tutor_id = auth user id, not tutors.id)
     const tutor = pendingTutors.find(t => t.id === id)
     await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
+    // FIX: lessons.tutor_id = auth user id (not tutors.id)
     if (tutor?.user_id) {
       await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
     }
@@ -94,12 +103,12 @@ export default function DashboardPage() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Stat label="Approved tutors"   value={stats.approvedTutors} sub="active"          href="/tutors"         />
-          <Stat label="Students"          value={stats.students}        sub="registered"      href="/users"          />
-          <Stat label="Active lessons"    value={stats.lessons}         sub="on platform"     href="/tutors"         />
-          <Stat label="Total reviews"     value={stats.totalRev}        sub="submitted"       href="/reviews"        />
-          <Stat label="Pending approvals" value={stats.pendingCount}    sub="need review"     href="/registrations"  alert={(stats.pendingCount ?? 0) > 0} />
-          <Stat label="Open reports"      value={stats.openRep}         sub="unresolved"      href="/reports"        alert={(stats.openRep ?? 0) > 0}      />
+          <Stat label="Approved tutors"   value={stats.approvedTutors} sub="active"      href="/tutors"        />
+          <Stat label="Students"          value={stats.students}        sub="registered"  href="/users"         />
+          <Stat label="Active lessons"    value={stats.lessons}         sub="on platform" href="/tutors"        />
+          <Stat label="Total reviews"     value={stats.totalRev}        sub="submitted"   href="/reviews"       />
+          <Stat label="Pending approvals" value={stats.pendingCount}    sub="need review" href="/registrations" alert={(stats.pendingCount ?? 0) > 0} />
+          <Stat label="Open reports"      value={stats.openRep}         sub="unresolved"  href="/reports"       alert={(stats.openRep ?? 0) > 0} />
         </div>
 
         {/* Month revenue banner */}
