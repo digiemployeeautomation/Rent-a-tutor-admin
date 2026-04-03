@@ -59,10 +59,10 @@ function monthKey(iso) {
   return `${d.toLocaleString('en', { month: 'short' })}'${String(d.getFullYear()).slice(2)}`
 }
 
-function last6Months() {
+function lastNMonths(n) {
   const out = []
   const now = new Date()
-  for (let i = 5; i >= 0; i--) {
+  for (let i = n - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     out.push(`${d.toLocaleString('en', { month: 'short' })}'${String(d.getFullYear()).slice(2)}`)
   }
@@ -96,7 +96,8 @@ export default function AnalyticsPage() {
         supabase.from('lesson_purchases').select('student_id', { count: 'exact', head: true }),
       ])
 
-      const months = last6Months()
+      const monthCount = range === '12m' ? 12 : range === 'all' ? 24 : 6
+      const months = lastNMonths(monthCount)
 
       // Revenue by month
       const revMap = {}; const sessMap = {}
