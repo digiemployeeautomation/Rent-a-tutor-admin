@@ -92,7 +92,7 @@ export default function PaymentsPage() {
           .select('id, amount_paid, purchased_at, transaction_id, lessons(title, subject, price), profiles(full_name)')
           .order('purchased_at', { ascending: false }).limit(100),
         supabase.from('bookings')
-          .select('id, amount, status, scheduled_at, subject, profiles(full_name)')
+          .select('id, amount, status, scheduled_at, subject, profiles!student_id(full_name)')
           .order('scheduled_at', { ascending: false }).limit(100),
         supabase.from('payout_requests')
           .select('id, amount, phone, status, requested_at, processed_at, tutors(id, profiles(full_name))')
