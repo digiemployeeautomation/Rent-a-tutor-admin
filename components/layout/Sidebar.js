@@ -6,20 +6,21 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 const NAV = [
-  { href: '/dashboard',      icon: '⬡', label: 'Dashboard'      },
-  { href: '/registrations',  icon: '📋', label: 'Applications',  badge: 'pending_tutors'  },
+  { href: '/dashboard',      icon: '⬡', label: 'Dashboard'        },
+  { href: '/registrations',  icon: '📋', label: 'Applications',    badge: 'pending_tutors' },
   { href: '/tutors',         icon: '👤', label: 'Tutors & Lessons' },
-  { href: '/reports',        icon: '⚑',  label: 'Reports',        badge: 'open_reports'   },
-  { href: '/reviews',        icon: '★',  label: 'Reviews'         },
+  { href: '/reports',        icon: '⚑',  label: 'Reports',         badge: 'open_reports'   },
+  { href: '/reviews',        icon: '★',  label: 'Reviews'          },
   { divider: true },
-  { href: '/analytics',      icon: '📈', label: 'Analytics'       },
-  { href: '/payments',       icon: '💳', label: 'Payments'        },
-  { href: '/users',          icon: '👥', label: 'Users'           },
+  { href: '/analytics',      icon: '📈', label: 'Analytics'        },
+  { href: '/payments',       icon: '💳', label: 'Payments'         },
+  { href: '/users',          icon: '👥', label: 'Users'            },
   { divider: true },
-  { href: '/topic-requests', icon: '💬', label: 'Topic Requests'  },
-  { href: '/announcements',  icon: '📣', label: 'Announcements'   },
-  { href: '/coupons',        icon: '%',  label: 'Coupons'         },
-  { href: '/bundles',        icon: '📦', label: 'Bundles'         },
+  { href: '/topic-requests', icon: '💬', label: 'Topic Requests'   },
+  { href: '/announcements',  icon: '📣', label: 'Announcements'    },
+  { href: '/coupons',        icon: '%',  label: 'Coupons'          },
+  { divider: true },
+  { href: '/logs',           icon: '📜', label: 'Audit Log'        },
 ]
 
 export default function Sidebar({ badges = {} }) {
@@ -61,10 +62,13 @@ export default function Sidebar({ badges = {} }) {
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {NAV.map((item, i) => {
           if (item.divider) {
-            return <div key={i} className="my-2 mx-2" style={{ borderTop: '1px solid var(--sidebar-border)' }} />
+            return (
+              <div key={i} className="my-2 mx-2"
+                style={{ borderTop: '1px solid var(--sidebar-border)' }} />
+            )
           }
 
-          const active  = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          const active   = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
           const badgeVal = item.badge ? (badges[item.badge] ?? 0) : 0
 
           return (
@@ -96,7 +100,8 @@ export default function Sidebar({ badges = {} }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-2 py-3 flex-shrink-0" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+      <div className="px-2 py-3 flex-shrink-0"
+        style={{ borderTop: '1px solid var(--sidebar-border)' }}>
         <button onClick={handleLogout}
           className="flex items-center gap-3 px-2 py-2 rounded-lg w-full text-sm transition-colors hover:opacity-80"
           style={{ color: 'var(--sidebar-muted)' }}>
