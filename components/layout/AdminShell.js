@@ -1,107 +1,115 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import Sidebar from './Sidebar'
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
-const PAGE_TITLES = {
-  '/dashboard':      'Dashboard',
-  '/registrations':  'Tutor Applications',
-  '/tutors':         'Tutors & Lessons',
-  '/reports':        'Reports & Complaints',
-  '/reviews':        'Student Reviews',
-  '/analytics':      'Analytics',
-  '/payments':       'Payments & Payouts',
-  '/users':          'Users',
-  '/announcements':  'Announcements',
-  '/coupons':        'Coupons',
-  '/bundles':        'Exam Prep Bundles',
-  '/topic-requests': 'Topic Requests',
-}
+const NAV = [
+  { href: '/dashboard',      icon: '⬡', label: 'Dashboard'        },
+  { href: '/registrations',  icon: '📋', label: 'Applications',    badge: 'pending_tutors' },
+  { href: '/tutors',         icon: '👤', label: 'Tutors & Lessons' },
+  { href: '/reports',        icon: '⚑',  label: 'Reports',         badge: 'open_reports'   },
+  { href: '/reviews',        icon: '★',  label: 'Reviews'          },
+  { divider: true },
+  { href: '/analytics',      icon: '📈', label: 'Analytics'        },
+  { href: '/payments',       icon: '💳', label: 'Payments'         },
+  { href: '/users',          icon: '👥', label: 'Users'            },
+  { divider: true },
+  { href: '/topic-requests', icon: '💬', label: 'Topic Requests'   },
+  { href: '/announcements',  icon: '📣', label: 'Announcements'    },
+  { href: '/coupons',        icon: '%',  label: 'Coupons'          },
+  { href: '/bundles',        icon: '📦', label: 'Bundles'          },
+  { divider: true },
+  { href: '/logs',           icon: '📜', label: 'Audit Log'        },
+]
 
-export default function AdminShell({ children }) {
-  const router   = useRouter()
-  const pathname = usePathname()
-  const [admin, setAdmin]   = useState(null)
-  const [badges, setBadges] = useState({})
-  const [ready, setReady]   = useState(false)
+export default function Sidebar({ badges = {} }) {
+  const pathname  = usePathname()
+  const router    = useRouter()
+  const [collapsed, setCollapsed] = useState(false)
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-
-      const { data: profile } = await supabase
-        .from('profiles').select('full_name, role').eq('id', user.id).single()
-
-      if (profile?.role !== 'admin') { router.push('/login?error=not_admin'); return }
-
-      setAdmin({ ...user, full_name: profile?.full_name })
-
-      // FIX: Only count tutors that are genuinely pending review —
-      // i.e. not approved AND have no rejection_reason (rejected tutors also
-      // have is_approved=false but should not show in the pending badge).
-      const [{ count: pendingTutors }, { count: openReports }] = await Promise.all([
-        supabase.from('tutors')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_approved', false)
-          .is('rejection_reason', null),
-        supabase.from('reports')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending'),
-      ])
-
-      setBadges({ pending_tutors: pendingTutors ?? 0, open_reports: openReports ?? 0 })
-      setReady(true)
-    }
-    init()
-  }, [router])
-
-  if (!ready) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--primary-mid)', borderTopColor: 'transparent' }} />
-          <span className="text-sm" style={{ color: 'var(--primary-mid)' }}>Loading admin console…</span>
-        </div>
-      </div>
-    )
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push('/login')
   }
 
-  const title    = PAGE_TITLES[pathname] ?? 'Admin'
-  const initials = admin?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? 'AD'
-
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
-      <Sidebar badges={badges} />
-
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top bar */}
-        <header className="flex items-center justify-between px-6 h-14 flex-shrink-0"
-          style={{ backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
-          <h1 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{title}</h1>
-          <div className="flex items-center gap-3">
-            <span className="text-xs" style={{ color: '#9ca3af' }}>
-              {new Date().toLocaleDateString('en-ZM', { weekday: 'short', month: 'short', day: 'numeric' })}
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium"
-                style={{ backgroundColor: 'var(--green-bg)', color: 'var(--primary-mid)' }}>
-                {initials}
-              </div>
-              <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>
-                {admin?.full_name ?? 'Admin'}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+    <aside
+      className="flex flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200"
+      style={{
+        width: collapsed ? 56 : 'var(--sidebar-width)',
+        backgroundColor: 'var(--sidebar-bg)',
+        borderRight: '1px solid var(--sidebar-border)',
+      }}
+    >
+      {/* Logo */}
+      <div className="flex items-center justify-between px-4 h-14 flex-shrink-0"
+        style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+        {!collapsed && (
+          <Link href="/dashboard" className="font-serif text-base"
+            style={{ color: 'var(--sidebar-text)' }}>
+            RaT <span style={{ color: 'var(--accent-lit)', fontStyle: 'italic' }}>Admin</span>
+          </Link>
+        )}
+        <button onClick={() => setCollapsed(c => !c)}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition hover:opacity-80"
+          style={{ color: 'var(--sidebar-muted)', marginLeft: collapsed ? 'auto' : 0 }}>
+          {collapsed ? '→' : '←'}
+        </button>
       </div>
-    </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+        {NAV.map((item, i) => {
+          if (item.divider) {
+            return (
+              <div key={i} className="my-2 mx-2"
+                style={{ borderTop: '1px solid var(--sidebar-border)' }} />
+            )
+          }
+
+          const active   = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          const badgeVal = item.badge ? (badges[item.badge] ?? 0) : 0
+
+          return (
+            <Link key={item.href} href={item.href}
+              className="relative flex items-center gap-3 px-2 py-2 rounded-lg text-sm transition-colors"
+              style={{
+                backgroundColor: active ? 'var(--sidebar-active-bg)' : 'transparent',
+                color: active ? 'var(--sidebar-active)' : 'var(--sidebar-text)',
+              }}
+              title={collapsed ? item.label : undefined}>
+              <span className="w-5 h-5 flex items-center justify-center flex-shrink-0 text-base">
+                {item.icon}
+              </span>
+              {!collapsed && (
+                <span className="flex-1 font-medium" style={{ fontSize: 13 }}>{item.label}</span>
+              )}
+              {!collapsed && badgeVal > 0 && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ backgroundColor: 'var(--accent-lit)', color: 'var(--primary)' }}>
+                  {badgeVal}
+                </span>
+              )}
+              {collapsed && badgeVal > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400" />
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-2 py-3 flex-shrink-0"
+        style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+        <button onClick={handleLogout}
+          className="flex items-center gap-3 px-2 py-2 rounded-lg w-full text-sm transition-colors hover:opacity-80"
+          style={{ color: 'var(--sidebar-muted)' }}>
+          <span className="w-5 h-5 flex items-center justify-center">↩</span>
+          {!collapsed && <span style={{ fontSize: 13 }}>Log out</span>}
+        </button>
+      </div>
+    </aside>
   )
 }
