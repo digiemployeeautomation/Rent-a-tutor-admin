@@ -12,6 +12,78 @@ const DOC_LABELS = {
   other:         'Other Document',
 }
 
+// Extract the storage path from a Supabase storage URL.
+// Handles both:
+//   .../storage/v1/object/public/verifications/USER/file.jpg  (public URL)
+//   .../storage/v1/object/sign/verifications/USER/file.jpg    (signed URL)
+// Returns "USER/file.jpg" (the path inside the bucket), or null if not parseable.
+function extractVerificationsPath(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    // Match /storage/v1/object/(public|sign)/verifications/<path>
+    const m = u.pathname.match(/\/storage\/v1\/object\/(?:public|sign)\/verifications\/(.+)/)
+    if (m) return decodeURIComponent(m[1]).split('?')[0]
+    // Fallback: if the url is just a bare path like "user-id/file.jpg"
+    if (!url.startsWith('http')) return url
+  } catch {
+    if (!url.startsWith('http')) return url
+  }
+  return null
+}
+
+// Button that generates a signed URL on click and opens it in a new tab.
+// Falls back to direct href if the path cannot be extracted (e.g. already-public URL).
+function ViewDocButton({ fileUrl }) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
+
+  async function handleView() {
+    setError('')
+    const path = extractVerificationsPath(fileUrl)
+
+    if (!path) {
+      // Can't parse path — open directly (works for already-public URLs)
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    setLoading(true)
+    const { data, error: signErr } = await supabase
+      .storage
+      .from('verifications')
+      .createSignedUrl(path, 3600) // 1-hour URL
+
+    setLoading(false)
+
+    if (signErr || !data?.signedUrl) {
+      console.error('[ViewDocButton]', signErr)
+      setError('Could not generate link. Check storage policy.')
+      return
+    }
+
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={handleView}
+        disabled={loading}
+        className="text-xs px-3 py-1.5 rounded-lg border disabled:opacity-50 transition"
+        style={{ borderColor: 'var(--border)', color: '#6b7280' }}
+      >
+        {loading ? '…' : 'View →'}
+      </button>
+      {error && (
+        <p className="text-xs" style={{ color: 'var(--red-text)', maxWidth: 160, textAlign: 'right' }}>
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── Application detail modal ──────────────────────────────────
 function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
   const [tab, setTab]         = useState('overview')
@@ -22,17 +94,11 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
   const [sending, setSending] = useState(false)
   const [rejecting, setRejecting] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
-  // FIX: track loading/error state so tabs don't appear silently empty
   const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     setLoadError(false)
 
-    // FIX 1: Use explicit FK hints so Supabase resolves the right join.
-    //   profiles!user_id  → tutors.user_id → profiles.id
-    //   profiles!author_id → application_notes.author_id → profiles.id
-    // FIX 3: .catch() on the Promise.all so a single failing query
-    //   doesn't silently swallow all three results.
     Promise.all([
       supabase
         .from('tutor_documents')
@@ -40,8 +106,6 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
         .eq('tutor_id', tutor.id)
         .order('uploaded_at', { ascending: false }),
 
-      // lessons.tutor_id stores the auth-user id, not the tutors table PK.
-      // Warn in console when user_id is missing so you can fix the signup flow.
       supabase
         .from('lessons')
         .select('id,title,subject,form_level,price,status,cloudflare_video_id,created_at')
@@ -50,7 +114,6 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
 
       supabase
         .from('application_notes')
-        // FIX 3: explicit FK hint for the profiles join
         .select('*, profiles!author_id(full_name)')
         .eq('tutor_id', tutor.id)
         .order('created_at', { ascending: true }),
@@ -63,11 +126,10 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
         if (!tutor.user_id) {
           console.warn(
             `[ApplicationModal] tutor ${tutor.id} has no user_id — ` +
-            'lessons may not load correctly. Check the signup flow sets user_id on the tutors row.'
+            'lessons may not load correctly.'
           )
         }
       })
-      // FIX 3: catch so a DB error surfaces rather than silently emptying all tabs
       .catch(err => {
         console.error('[ApplicationModal] failed to load tab data:', err)
         setLoadError(true)
@@ -81,7 +143,6 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
     const { data: note } = await supabase
       .from('application_notes')
       .insert({ tutor_id: tutor.id, author_id: user.id, author_role: 'admin', body: msg.trim() })
-      // FIX 3: same explicit FK hint on the single-note re-fetch
       .select('*, profiles!author_id(full_name)')
       .single()
     if (note) setThread(t => [...t, note])
@@ -151,7 +212,6 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
 
-          {/* Global load-error banner */}
           {loadError && (
             <div className="mb-4 rounded-xl px-4 py-3 text-xs"
               style={{ backgroundColor: 'var(--red-bg)', color: 'var(--red-text)' }}>
@@ -187,32 +247,54 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
 
           {tab === 'documents' && (
             <div className="space-y-3">
-              {docs.length === 0
-                ? <p className="text-sm text-center py-10" style={{ color: '#9ca3af' }}>No documents uploaded.</p>
-                : docs.map(d => (
-                    <div key={d.id} className="flex items-center justify-between p-4 rounded-xl"
-                      style={{ border: '1px solid var(--border)' }}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">📄</span>
-                        <div>
-                          <p className="text-sm font-medium" style={{ color: '#111827' }}>
-                            {DOC_LABELS[d.document_type] ?? d.document_type}
-                          </p>
-                          <p className="text-xs" style={{ color: '#9ca3af' }}>
-                            {d.file_name ?? 'Document'} · {new Date(d.uploaded_at).toLocaleDateString('en-ZM', {
-                              month: 'short', day: 'numeric', year: 'numeric',
-                            })}
-                          </p>
+              {docs.length === 0 ? (
+                <div className="text-center py-10 rounded-2xl border border-dashed"
+                  style={{ borderColor: 'var(--border)' }}>
+                  <p className="text-sm" style={{ color: '#9ca3af' }}>No documents uploaded yet.</p>
+                  <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>
+                    The tutor hasn't submitted any verification files.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Info banner explaining the signed-URL flow */}
+                  <div className="rounded-xl px-4 py-3 text-xs mb-1"
+                    style={{ backgroundColor: 'var(--blue-bg)', color: 'var(--blue-text)' }}>
+                    ℹ Documents are stored privately. Each "View" button generates a secure
+                    1-hour link that opens in a new tab.
+                  </div>
+
+                  {docs.map(d => {
+                    const isImage = /\.(jpe?g|png|heic|webp)$/i.test(d.file_name ?? '')
+                    const isPdf   = /\.pdf$/i.test(d.file_name ?? '')
+                    const icon    = isPdf ? '📄' : isImage ? '🖼' : '📎'
+
+                    return (
+                      <div key={d.id}
+                        className="flex items-center justify-between p-4 rounded-xl"
+                        style={{ border: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-2xl flex-shrink-0">{icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium" style={{ color: '#111827' }}>
+                              {DOC_LABELS[d.document_type] ?? d.document_type}
+                            </p>
+                            <p className="text-xs truncate" style={{ color: '#9ca3af' }}>
+                              {d.file_name ?? 'Document'} ·{' '}
+                              {new Date(d.uploaded_at).toLocaleDateString('en-ZM', {
+                                month: 'short', day: 'numeric', year: 'numeric',
+                              })}
+                            </p>
+                          </div>
                         </div>
+
+                        {/* Uses signed URL — works with private bucket */}
+                        <ViewDocButton fileUrl={d.file_url} />
                       </div>
-                      <a href={d.file_url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs px-3 py-1.5 rounded-lg border"
-                        style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
-                        View →
-                      </a>
-                    </div>
-                  ))
-              }
+                    )
+                  })}
+                </>
+              )}
             </div>
           )}
 
@@ -222,7 +304,6 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                 <div className="rounded-xl px-4 py-3 text-xs mb-2"
                   style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber-text)' }}>
                   ⚠ This tutor record is missing <code>user_id</code>. Lessons may not display.
-                  Check that the signup flow writes <code>user_id</code> to the <code>tutors</code> table.
                 </div>
               )}
               {lessons.length === 0
@@ -359,7 +440,6 @@ export default function RegistrationsPage() {
     let query = supabase
       .from('tutors')
       .select(
-        // FIX 1: explicit FK hint — tutors.user_id references profiles.id
         'id,user_id,is_approved,subjects,hourly_rate_kwacha,bio,phone,location,years_experience,qualification,rejection_reason,created_at,' +
         'profiles!user_id(full_name,avatar_url)'
       )
@@ -382,7 +462,6 @@ export default function RegistrationsPage() {
     if (tutor?.user_id) {
       await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
     }
-    // FIX 2: include admin_id so the NOT NULL constraint is satisfied
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('admin_log').insert({
       admin_id:    user.id,
@@ -397,7 +476,6 @@ export default function RegistrationsPage() {
     await supabase.from('tutors').update({
       rejection_reason: reason || 'Application not approved',
     }).eq('id', id)
-    // FIX 2: include admin_id
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('admin_log').insert({
       admin_id:    user.id,
@@ -423,7 +501,6 @@ export default function RegistrationsPage() {
     <AdminShell>
       <div className="p-6 space-y-5">
 
-        {/* Tab count cards */}
         <div className="grid grid-cols-3 gap-3">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -458,7 +535,6 @@ export default function RegistrationsPage() {
           ))}
         </div>
 
-        {/* Search */}
         <div className="flex justify-end">
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by name…"
@@ -466,7 +542,6 @@ export default function RegistrationsPage() {
             style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)', width: 220 }} />
         </div>
 
-        {/* List */}
         {loading ? (
           <div className="space-y-2">
             {[1,2,3,4,5].map(i => (
