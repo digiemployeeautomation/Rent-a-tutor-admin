@@ -11,14 +11,20 @@ function Stat({ label, value, sub, href, alert = false }) {
         backgroundColor: alert ? 'var(--amber-bg)' : 'var(--green-bg)',
         border: alert ? '1px solid #f59e0b33' : '1px solid transparent',
       }}>
-      <div className="text-xs font-medium mb-1" style={{ color: alert ? 'var(--amber-text)' : 'var(--green-text)', opacity: 0.8 }}>
+      <div className="text-xs font-medium mb-1"
+        style={{ color: alert ? 'var(--amber-text)' : 'var(--green-text)', opacity: 0.8 }}>
         {label}
       </div>
       <div className="font-serif text-3xl font-bold"
         style={{ color: alert ? 'var(--amber-text)' : 'var(--primary)' }}>
         {value ?? <span className="inline-block w-12 h-7 bg-black/5 rounded animate-pulse" />}
       </div>
-      {sub && <div className="text-xs mt-0.5" style={{ color: alert ? 'var(--amber-text)' : 'var(--green-text)', opacity: 0.6 }}>{sub}</div>}
+      {sub && (
+        <div className="text-xs mt-0.5"
+          style={{ color: alert ? 'var(--amber-text)' : 'var(--green-text)', opacity: 0.6 }}>
+          {sub}
+        </div>
+      )}
     </div>
   )
   return href ? <Link href={href}>{inner}</Link> : inner
@@ -35,8 +41,7 @@ export default function DashboardPage() {
     async function load() {
       const [
         { count: approvedTutors },
-        // FIX: Only count genuinely pending tutors (not rejected ones).
-        // Rejected tutors also have is_approved=false but have rejection_reason set.
+        // Only count genuinely pending tutors (rejection_reason IS NULL).
         { count: pendingCount },
         { count: students },
         { count: lessons },
@@ -51,21 +56,38 @@ export default function DashboardPage() {
         supabase.from('tutors').select('*', { count: 'exact', head: true }).eq('is_approved', true),
         supabase.from('tutors').select('*', { count: 'exact', head: true })
           .eq('is_approved', false)
-          .is('rejection_reason', null),   // ← exclude rejected
+          .is('rejection_reason', null),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
         supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('reviews').select('*', { count: 'exact', head: true }),
-        supabase.from('lesson_purchases').select('amount_paid').gte('purchased_at', new Date(Date.now() - 30 * 86400000).toISOString()),
+        supabase.from('lesson_purchases')
+          .select('amount_paid')
+          .gte('purchased_at', new Date(Date.now() - 30 * 86400000).toISOString()),
+
+        // FIX 1: explicit FK hint — tutors.user_id references profiles.id
         supabase.from('tutors')
-          .select('id, user_id, created_at, subjects, profiles(full_name)')
+          .select('id, user_id, created_at, subjects, profiles!user_id(full_name)')
           .eq('is_approved', false)
-          .is('rejection_reason', null)    // ← only true pending in the preview list
+          .is('rejection_reason', null)
           .order('created_at', { ascending: false })
           .limit(5),
-        supabase.from('reports').select('id, reason, reported_type, created_at, profiles!reporter_id(full_name)').eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
-        supabase.from('lessons').select('id, title, subject, status, created_at, tutors(profiles(full_name))').order('created_at', { ascending: false }).limit(6),
-        supabase.from('reviews').select('id, rating, comment, created_at, profiles(full_name), tutors(profiles(full_name))').order('created_at', { ascending: false }).limit(4),
+
+        supabase.from('reports')
+          .select('id, reason, reported_type, created_at, profiles!reporter_id(full_name)')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(5),
+
+        supabase.from('lessons')
+          .select('id, title, subject, status, created_at, tutors(profiles!user_id(full_name))')
+          .order('created_at', { ascending: false })
+          .limit(6),
+
+        supabase.from('reviews')
+          .select('id, rating, comment, created_at, profiles(full_name), tutors(profiles!user_id(full_name))')
+          .order('created_at', { ascending: false })
+          .limit(4),
       ])
 
       const monthRevenue = (purch ?? []).reduce((s, p) => s + (p.amount_paid ?? 0), 0)
@@ -81,18 +103,40 @@ export default function DashboardPage() {
   async function approveTutor(id) {
     const tutor = pendingTutors.find(t => t.id === id)
     await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
-    // FIX: lessons.tutor_id = auth user id (not tutors.id)
+    // lessons.tutor_id = auth user id, not tutors.id
     if (tutor?.user_id) {
-      await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
+      await supabase.from('lessons')
+        .update({ status: 'active' })
+        .eq('tutor_id', tutor.user_id)
+        .eq('status', 'draft')
     }
+    // FIX 2: include admin_id in audit log
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'approve_tutor',
+      target_type: 'tutor',
+      target_id:   id,
+    })
     setPending(p => p.filter(t => t.id !== id))
     setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
   }
 
   async function rejectTutor(id) {
-    const reason = window.prompt('Rejection reason (optional):') ?? ''
-    if (reason === null) return
-    await supabase.from('tutors').update({ rejection_reason: reason || 'Application not approved' }).eq('id', id)
+    const reason = window.prompt('Rejection reason (optional):')
+    if (reason === null) return   // user cancelled the prompt
+    await supabase.from('tutors')
+      .update({ rejection_reason: reason || 'Application not approved' })
+      .eq('id', id)
+    // FIX 2: include admin_id in audit log
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'reject_tutor',
+      target_type: 'tutor',
+      target_id:   id,
+      meta:        { reason: reason || 'Application not approved' },
+    })
     setPending(p => p.filter(t => t.id !== id))
     setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
   }
@@ -107,8 +151,10 @@ export default function DashboardPage() {
           <Stat label="Students"          value={stats.students}        sub="registered"  href="/users"         />
           <Stat label="Active lessons"    value={stats.lessons}         sub="on platform" href="/tutors"        />
           <Stat label="Total reviews"     value={stats.totalRev}        sub="submitted"   href="/reviews"       />
-          <Stat label="Pending approvals" value={stats.pendingCount}    sub="need review" href="/registrations" alert={(stats.pendingCount ?? 0) > 0} />
-          <Stat label="Open reports"      value={stats.openRep}         sub="unresolved"  href="/reports"       alert={(stats.openRep ?? 0) > 0} />
+          <Stat label="Pending approvals" value={stats.pendingCount}    sub="need review" href="/registrations"
+            alert={(stats.pendingCount ?? 0) > 0} />
+          <Stat label="Open reports"      value={stats.openRep}         sub="unresolved"  href="/reports"
+            alert={(stats.openRep ?? 0) > 0} />
         </div>
 
         {/* Month revenue banner */}
@@ -138,10 +184,11 @@ export default function DashboardPage() {
             {pendingTutors.length === 0 ? (
               <div className="text-center py-6 text-xs" style={{ color: '#9ca3af' }}>All clear ✓</div>
             ) : pendingTutors.map(t => {
-              const name = t.profiles?.full_name ?? 'Tutor'
+              const name     = t.profiles?.full_name ?? 'Tutor'
               const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
               return (
-                <div key={t.id} className="flex items-center justify-between gap-2 py-2.5 border-b last:border-0"
+                <div key={t.id}
+                  className="flex items-center justify-between gap-2 py-2.5 border-b last:border-0"
                   style={{ borderColor: 'var(--border-light)' }}>
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0"
@@ -223,7 +270,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent lessons table */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div className="rounded-xl overflow-hidden"
+          style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div className="flex justify-between items-center px-5 py-4"
             style={{ borderBottom: '1px solid var(--border)' }}>
             <h2 className="font-serif text-base" style={{ color: 'var(--primary)' }}>Recent lessons</h2>

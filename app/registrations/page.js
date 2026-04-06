@@ -22,27 +22,68 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
   const [sending, setSending] = useState(false)
   const [rejecting, setRejecting] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  // FIX: track loading/error state so tabs don't appear silently empty
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
+    setLoadError(false)
+
+    // FIX 1: Use explicit FK hints so Supabase resolves the right join.
+    //   profiles!user_id  → tutors.user_id → profiles.id
+    //   profiles!author_id → application_notes.author_id → profiles.id
+    // FIX 3: .catch() on the Promise.all so a single failing query
+    //   doesn't silently swallow all three results.
     Promise.all([
-      supabase.from('tutor_documents').select('*').eq('tutor_id', tutor.id).order('uploaded_at', { ascending: false }),
-      // lessons.tutor_id = auth user id (not tutors.id) — use user_id if available, fallback to id
-      supabase.from('lessons').select('id,title,subject,form_level,price,status,cloudflare_video_id,created_at').eq('tutor_id', tutor.user_id ?? tutor.id).order('created_at', { ascending: false }),
-      supabase.from('application_notes').select('*,profiles(full_name)').eq('tutor_id', tutor.id).order('created_at', { ascending: true }),
-    ]).then(([{ data: d }, { data: l }, { data: n }]) => {
-      setDocs(d ?? [])
-      setLessons(l ?? [])
-      setThread(n ?? [])
-    })
-  }, [tutor.id])
+      supabase
+        .from('tutor_documents')
+        .select('*')
+        .eq('tutor_id', tutor.id)
+        .order('uploaded_at', { ascending: false }),
+
+      // lessons.tutor_id stores the auth-user id, not the tutors table PK.
+      // Warn in console when user_id is missing so you can fix the signup flow.
+      supabase
+        .from('lessons')
+        .select('id,title,subject,form_level,price,status,cloudflare_video_id,created_at')
+        .eq('tutor_id', tutor.user_id ?? tutor.id)
+        .order('created_at', { ascending: false }),
+
+      supabase
+        .from('application_notes')
+        // FIX 3: explicit FK hint for the profiles join
+        .select('*, profiles!author_id(full_name)')
+        .eq('tutor_id', tutor.id)
+        .order('created_at', { ascending: true }),
+    ])
+      .then(([{ data: d }, { data: l }, { data: n }]) => {
+        setDocs(d ?? [])
+        setLessons(l ?? [])
+        setThread(n ?? [])
+
+        if (!tutor.user_id) {
+          console.warn(
+            `[ApplicationModal] tutor ${tutor.id} has no user_id — ` +
+            'lessons may not load correctly. Check the signup flow sets user_id on the tutors row.'
+          )
+        }
+      })
+      // FIX 3: catch so a DB error surfaces rather than silently emptying all tabs
+      .catch(err => {
+        console.error('[ApplicationModal] failed to load tab data:', err)
+        setLoadError(true)
+      })
+  }, [tutor.id, tutor.user_id])
 
   async function sendNote() {
     if (!msg.trim()) return
     setSending(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: note } = await supabase.from('application_notes')
+    const { data: note } = await supabase
+      .from('application_notes')
       .insert({ tutor_id: tutor.id, author_id: user.id, author_role: 'admin', body: msg.trim() })
-      .select('*,profiles(full_name)').single()
+      // FIX 3: same explicit FK hint on the single-note re-fetch
+      .select('*, profiles!author_id(full_name)')
+      .single()
     if (note) setThread(t => [...t, note])
     setMsg('')
     setSending(false)
@@ -52,10 +93,10 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
   const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   const TABS = [
-    { key: 'overview',   label: 'Overview'                   },
-    { key: 'documents',  label: `Docs (${docs.length})`      },
+    { key: 'overview',   label: 'Overview'                    },
+    { key: 'documents',  label: `Docs (${docs.length})`       },
     { key: 'lessons',    label: `Lessons (${lessons.length})` },
-    { key: 'notes',      label: `Notes (${thread.length})`   },
+    { key: 'notes',      label: `Notes (${thread.length})`    },
   ]
 
   return (
@@ -66,7 +107,8 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
         style={{ backgroundColor: 'var(--surface)', maxHeight: '90vh' }}>
 
         {/* Header */}
-        <div className="px-6 py-5 flex-shrink-0" style={{ backgroundColor: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
+        <div className="px-6 py-5 flex-shrink-0"
+          style={{ backgroundColor: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
@@ -76,7 +118,9 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
               <div>
                 <h2 className="font-serif text-xl" style={{ color: 'var(--primary)' }}>{name}</h2>
                 <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
-                  Applied {new Date(tutor.created_at).toLocaleDateString('en-ZM', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  Applied {new Date(tutor.created_at).toLocaleDateString('en-ZM', {
+                    day: 'numeric', month: 'long', year: 'numeric',
+                  })}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {(tutor.subjects ?? []).map(s => (
@@ -91,7 +135,8 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
         </div>
 
         {/* Tabs */}
-        <div className="flex px-6 gap-1 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex px-6 gap-1 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--border)' }}>
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className="text-xs px-4 py-3 font-medium transition border-b-2"
@@ -106,16 +151,24 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
 
+          {/* Global load-error banner */}
+          {loadError && (
+            <div className="mb-4 rounded-xl px-4 py-3 text-xs"
+              style={{ backgroundColor: 'var(--red-bg)', color: 'var(--red-text)' }}>
+              Failed to load some tab data. Check the browser console for details.
+            </div>
+          )}
+
           {tab === 'overview' && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Qualification',   value: tutor.qualification     || '—' },
-                  { label: 'Experience',       value: tutor.years_experience ? `${tutor.years_experience} years` : '—' },
-                  { label: 'Location',         value: tutor.location          || '—' },
-                  { label: 'Phone',            value: tutor.phone             || '—' },
-                  { label: 'Hourly rate',      value: tutor.hourly_rate_kwacha ? `K${tutor.hourly_rate_kwacha}/hr` : '—' },
-                  { label: 'Docs uploaded',    value: docs.length                   },
+                  { label: 'Qualification',  value: tutor.qualification     || '—' },
+                  { label: 'Experience',      value: tutor.years_experience ? `${tutor.years_experience} years` : '—' },
+                  { label: 'Location',        value: tutor.location          || '—' },
+                  { label: 'Phone',           value: tutor.phone             || '—' },
+                  { label: 'Hourly rate',     value: tutor.hourly_rate_kwacha ? `K${tutor.hourly_rate_kwacha}/hr` : '—' },
+                  { label: 'Docs uploaded',   value: docs.length                   },
                 ].map(f => (
                   <div key={f.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg)' }}>
                     <p className="text-xs mb-0.5" style={{ color: '#9ca3af' }}>{f.label}</p>
@@ -146,7 +199,9 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                             {DOC_LABELS[d.document_type] ?? d.document_type}
                           </p>
                           <p className="text-xs" style={{ color: '#9ca3af' }}>
-                            {d.file_name ?? 'Document'} · {new Date(d.uploaded_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {d.file_name ?? 'Document'} · {new Date(d.uploaded_at).toLocaleDateString('en-ZM', {
+                              month: 'short', day: 'numeric', year: 'numeric',
+                            })}
                           </p>
                         </div>
                       </div>
@@ -163,6 +218,13 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
 
           {tab === 'lessons' && (
             <div className="space-y-3">
+              {!tutor.user_id && (
+                <div className="rounded-xl px-4 py-3 text-xs mb-2"
+                  style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber-text)' }}>
+                  ⚠ This tutor record is missing <code>user_id</code>. Lessons may not display.
+                  Check that the signup flow writes <code>user_id</code> to the <code>tutors</code> table.
+                </div>
+              )}
               {lessons.length === 0
                 ? <p className="text-sm text-center py-10" style={{ color: '#9ca3af' }}>No lessons uploaded yet.</p>
                 : lessons.map(l => (
@@ -174,7 +236,10 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                           <p className="text-xs" style={{ color: '#9ca3af' }}>{l.subject} · {l.form_level} · K{l.price}</p>
                         </div>
                         <span className="text-xs px-2.5 py-1 rounded-full capitalize"
-                          style={{ backgroundColor: l.status === 'active' ? 'var(--green-bg)' : 'var(--amber-bg)', color: l.status === 'active' ? 'var(--green-text)' : 'var(--amber-text)' }}>
+                          style={{
+                            backgroundColor: l.status === 'active' ? 'var(--green-bg)' : 'var(--amber-bg)',
+                            color: l.status === 'active' ? 'var(--green-text)' : 'var(--amber-text)',
+                          }}>
                           {l.status ?? 'draft'}
                         </span>
                       </div>
@@ -293,7 +358,11 @@ export default function RegistrationsPage() {
 
     let query = supabase
       .from('tutors')
-      .select('id,user_id,is_approved,subjects,hourly_rate_kwacha,bio,phone,location,years_experience,qualification,rejection_reason,created_at,profiles(full_name,avatar_url)')
+      .select(
+        // FIX 1: explicit FK hint — tutors.user_id references profiles.id
+        'id,user_id,is_approved,subjects,hourly_rate_kwacha,bio,phone,location,years_experience,qualification,rejection_reason,created_at,' +
+        'profiles!user_id(full_name,avatar_url)'
+      )
       .order('created_at', { ascending: false })
 
     if (tab === 'pending')  query = query.eq('is_approved', false).is('rejection_reason', null)
@@ -313,13 +382,30 @@ export default function RegistrationsPage() {
     if (tutor?.user_id) {
       await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
     }
-    await supabase.from('admin_log').insert({ action: 'approve_tutor', target_type: 'tutor', target_id: id })
+    // FIX 2: include admin_id so the NOT NULL constraint is satisfied
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'approve_tutor',
+      target_type: 'tutor',
+      target_id:   id,
+    })
     load()
   }
 
   async function rejectTutor(id, reason) {
-    await supabase.from('tutors').update({ rejection_reason: reason || 'Application not approved' }).eq('id', id)
-    await supabase.from('admin_log').insert({ action: 'reject_tutor', target_type: 'tutor', target_id: id, meta: { reason } })
+    await supabase.from('tutors').update({
+      rejection_reason: reason || 'Application not approved',
+    }).eq('id', id)
+    // FIX 2: include admin_id
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'reject_tutor',
+      target_type: 'tutor',
+      target_id:   id,
+      meta:        { reason },
+    })
     load()
   }
 
@@ -346,14 +432,26 @@ export default function RegistrationsPage() {
                 backgroundColor: tab === t.key
                   ? t.key === 'pending' ? 'var(--amber-bg)' : t.key === 'approved' ? 'var(--green-bg)' : 'var(--red-bg)'
                   : 'var(--surface)',
-                border: `1px solid ${tab === t.key ? 'var(--border)' : 'var(--border)'}`,
+                border: '1px solid var(--border)',
               }}>
               <p className="text-xs font-medium mb-1"
-                style={{ color: tab === t.key ? t.key === 'approved' ? 'var(--green-text)' : t.key === 'rejected' ? 'var(--red-text)' : 'var(--amber-text)' : '#9ca3af' }}>
+                style={{
+                  color: tab === t.key
+                    ? t.key === 'approved' ? 'var(--green-text)'
+                    : t.key === 'rejected' ? 'var(--red-text)'
+                    : 'var(--amber-text)'
+                    : '#9ca3af',
+                }}>
                 {t.label}
               </p>
               <p className="font-serif text-3xl font-bold"
-                style={{ color: tab === t.key ? t.key === 'approved' ? 'var(--green-text)' : t.key === 'rejected' ? 'var(--red-text)' : 'var(--amber-text)' : 'var(--primary)' }}>
+                style={{
+                  color: tab === t.key
+                    ? t.key === 'approved' ? 'var(--green-text)'
+                    : t.key === 'rejected' ? 'var(--red-text)'
+                    : 'var(--amber-text)'
+                    : 'var(--primary)',
+                }}>
                 {t.count ?? 0}
               </p>
             </button>
@@ -371,7 +469,9 @@ export default function RegistrationsPage() {
         {/* List */}
         {loading ? (
           <div className="space-y-2">
-            {[1,2,3,4,5].map(i => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
@@ -407,7 +507,9 @@ export default function RegistrationsPage() {
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <p className="text-xs" style={{ color: '#9ca3af' }}>
-                      {new Date(t.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(t.created_at).toLocaleDateString('en-ZM', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                      })}
                     </p>
                     <span className="text-xs" style={{ color: '#9ca3af' }}>Review →</span>
                   </div>
@@ -419,8 +521,12 @@ export default function RegistrationsPage() {
       </div>
 
       {selected && (
-        <ApplicationModal tutor={selected} onClose={() => setSelected(null)}
-          onApprove={approveTutor} onReject={rejectTutor} />
+        <ApplicationModal
+          tutor={selected}
+          onClose={() => setSelected(null)}
+          onApprove={approveTutor}
+          onReject={rejectTutor}
+        />
       )}
     </AdminShell>
   )

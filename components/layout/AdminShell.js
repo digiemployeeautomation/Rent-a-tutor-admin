@@ -15,6 +15,7 @@ const PAGE_TITLES = {
   '/users':          'Users',
   '/announcements':  'Announcements',
   '/coupons':        'Coupons',
+  '/bundles':        'Bundles',
   '/topic-requests': 'Topic Requests',
   '/logs':           'Audit Log',
 }
@@ -32,9 +33,15 @@ export default function AdminShell({ children }) {
       if (!user) { router.push('/login'); return }
 
       const { data: profile } = await supabase
-        .from('profiles').select('full_name, role').eq('id', user.id).single()
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single()
 
-      if (profile?.role !== 'admin') { router.push('/login?error=not_admin'); return }
+      if (profile?.role !== 'admin') {
+        router.push('/login?error=not_admin')
+        return
+      }
 
       setAdmin({ ...user, full_name: profile?.full_name })
 
@@ -50,7 +57,10 @@ export default function AdminShell({ children }) {
           .eq('status', 'pending'),
       ])
 
-      setBadges({ pending_tutors: pendingTutors ?? 0, open_reports: openReports ?? 0 })
+      setBadges({
+        pending_tutors: pendingTutors ?? 0,
+        open_reports:   openReports   ?? 0,
+      })
       setReady(true)
     }
     init()
