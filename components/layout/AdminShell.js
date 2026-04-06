@@ -15,7 +15,6 @@ const PAGE_TITLES = {
   '/users':          'Users',
   '/announcements':  'Announcements',
   '/coupons':        'Coupons',
-  '/bundles':        'Bundles',
   '/topic-requests': 'Topic Requests',
   '/logs':           'Audit Log',
 }
@@ -45,8 +44,6 @@ export default function AdminShell({ children }) {
 
       setAdmin({ ...user, full_name: profile?.full_name })
 
-      // Only count tutors that are genuinely pending review —
-      // rejected tutors also have is_approved=false but have rejection_reason set.
       const [{ count: pendingTutors }, { count: openReports }] = await Promise.all([
         supabase.from('tutors')
           .select('*', { count: 'exact', head: true })
@@ -86,7 +83,6 @@ export default function AdminShell({ children }) {
       <Sidebar badges={badges} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top bar */}
         <header className="flex items-center justify-between px-6 h-14 flex-shrink-0"
           style={{ backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
           <h1 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{title}</h1>
@@ -106,7 +102,6 @@ export default function AdminShell({ children }) {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
