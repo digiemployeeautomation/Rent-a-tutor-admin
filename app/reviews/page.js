@@ -28,28 +28,50 @@ export default function ReviewsPage() {
   async function deleteReview(id) {
     if (!window.confirm('Remove this review? This cannot be undone.')) return
     setDeleting(id)
-    await supabase.from('reviews').delete().eq('id', id)
-    await supabase.from('admin_log').insert({ action: 'delete_review', target_type: 'review', target_id: id })
+
+    const { error: deleteErr } = await supabase.from('reviews').delete().eq('id', id)
+    if (deleteErr) {
+      console.error('[deleteReview]', deleteErr)
+      alert(`Failed to delete review: ${deleteErr.message}`)
+      setDeleting(null)
+      return
+    }
+
+    // FIX: include admin_id so NOT NULL constraint is satisfied
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error: logErr } = await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'delete_review',
+      target_type: 'review',
+      target_id:   id,
+    })
+    if (logErr) console.error('[admin_log insert]', logErr)
+
     setReviews(prev => prev.filter(r => r.id !== id))
     setDeleting(null)
   }
 
   async function toggleFlag(id, current) {
-    await supabase.from('reviews').update({ flagged: !current }).eq('id', id)
+    const { error } = await supabase.from('reviews').update({ flagged: !current }).eq('id', id)
+    if (error) {
+      console.error('[toggleFlag]', error)
+      return
+    }
     setReviews(prev => prev.map(r => r.id === id ? { ...r, flagged: !current } : r))
   }
 
   const filtered = reviews.filter(r => {
     if (!search) return true
-    return [r.profiles?.full_name, r.tutors?.profiles?.full_name, r.comment].some(s => s?.toLowerCase().includes(search.toLowerCase()))
+    return [r.profiles?.full_name, r.tutors?.profiles?.full_name, r.comment]
+      .some(s => s?.toLowerCase().includes(search.toLowerCase()))
   })
 
   const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n)
 
   const FILTER_TABS = [
-    { key: 'all',     label: `All (${reviews.length})`                              },
-    { key: 'low',     label: `Low (${reviews.filter(r => r.rating <= 2).length})`   },
-    { key: 'flagged', label: `Flagged (${reviews.filter(r => r.flagged).length})`   },
+    { key: 'all',     label: `All (${reviews.length})`                            },
+    { key: 'low',     label: `Low (${reviews.filter(r => r.rating <= 2).length})` },
+    { key: 'flagged', label: `Flagged (${reviews.filter(r => r.flagged).length})` },
   ]
 
   return (

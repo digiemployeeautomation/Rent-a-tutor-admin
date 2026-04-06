@@ -99,7 +99,6 @@ export default function AnalyticsPage() {
       const monthCount = range === '12m' ? 12 : range === 'all' ? 24 : 6
       const months = lastNMonths(monthCount)
 
-      // Revenue by month
       const revMap = {}; const sessMap = {}
       ;(purchases ?? []).forEach(p => {
         const k = monthKey(p.purchased_at)
@@ -109,10 +108,8 @@ export default function AnalyticsPage() {
         const k = monthKey(b.scheduled_at)
         sessMap[k] = (sessMap[k] ?? 0) + (b.amount ?? 0)
       })
-
       const revenueByMonth = months.map(m => ({ month: m, value: (revMap[m] ?? 0) + (sessMap[m] ?? 0) }))
 
-      // Signups by month
       const signupMap = {}
       ;(profiles ?? []).forEach(p => {
         const k = monthKey(p.created_at)
@@ -120,37 +117,36 @@ export default function AnalyticsPage() {
       })
       const signupByMonth = months.map(m => ({ month: m, value: signupMap[m] ?? 0 }))
 
-      // Subject breakdown
       const subjMap = {}
       ;(lessonAgg ?? []).forEach(l => { subjMap[l.subject] = (subjMap[l.subject] ?? 0) + (l.purchase_count ?? 0) })
       const topSubjects = Object.entries(subjMap).sort((a, b) => b[1] - a[1]).slice(0, 8)
         .map(([subject, value]) => ({ subject: subject.split(' ')[0], value }))
 
-      // KPIs
-      const totalRevenue   = (purchases ?? []).reduce((s, p) => s + (p.amount_paid ?? 0), 0)
+      const totalRevenue = (purchases ?? []).reduce((s, p) => s + (p.amount_paid ?? 0), 0)
         + (completedBookings ?? []).reduce((s, b) => s + (b.amount ?? 0), 0)
-      const platformRev    = Math.round(totalRevenue * 0.275)
-      const conversion     = totalStudents ? Math.round(((purchaserCount ?? 0) / totalStudents) * 100) : 0
-      const thisM = revenueByMonth[5]?.value ?? 0
-      const lastM = revenueByMonth[4]?.value ?? 0
-      const delta = lastM > 0 ? Math.round(((thisM - lastM) / lastM) * 100) : null
+      const conversion = totalStudents ? Math.round(((purchaserCount ?? 0) / totalStudents) * 100) : 0
 
-      setData({ revenueByMonth, signupByMonth, topSubjects, totalRevenue, platformRev, conversion, delta })
+      // FIX: use last two entries rather than hardcoded indices [5]/[4],
+      // so MoM delta is correct for all range selections (6m, 12m, all-time)
+      const last  = revenueByMonth[revenueByMonth.length - 1]?.value ?? 0
+      const prev  = revenueByMonth[revenueByMonth.length - 2]?.value ?? 0
+      const delta = prev > 0 ? Math.round(((last - prev) / prev) * 100) : null
+
+      setData({ revenueByMonth, signupByMonth, topSubjects, totalRevenue, conversion, delta })
     }
     load()
   }, [range])
 
+  // Revenue split removed — only show total revenue and student conversion
   const kpis = data ? [
-    { label: 'Total revenue',      value: `K${data.totalRevenue.toLocaleString()}`, sub: 'all purchases + sessions', delta: data.delta },
-    { label: 'Platform earnings',  value: `K${data.platformRev.toLocaleString()}`,  sub: '~27.5% blended share'     },
-    { label: 'Student conversion', value: `${data.conversion}%`,                   sub: 'students who bought'       },
+    { label: 'Total revenue',      value: `K${data.totalRevenue.toLocaleString()}`, sub: 'lesson sales + completed sessions', delta: data.delta },
+    { label: 'Student conversion', value: `${data.conversion}%`, sub: 'students who made a purchase' },
   ] : []
 
   return (
     <AdminShell>
       <div className="p-6 space-y-6">
 
-        {/* Range picker */}
         <div className="flex justify-end">
           <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
             {[{ v: '6m', l: '6 months' }, { v: '12m', l: '12 months' }, { v: 'all', l: 'All time' }].map(r => (
@@ -165,13 +161,11 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {data ? kpis.map(k => <KpiCard key={k.label} {...k} />)
-            : [1,2,3].map(i => <div key={i} className="h-24 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}
+            : [1,2].map(i => <div key={i} className="h-24 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}
         </div>
 
-        {/* Charts row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
             <h2 className="font-serif text-base mb-0.5" style={{ color: 'var(--primary)' }}>Revenue by month</h2>
@@ -187,7 +181,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Top subjects */}
         <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
           <h2 className="font-serif text-base mb-0.5" style={{ color: 'var(--primary)' }}>Top subjects by purchases</h2>
           <p className="text-xs mb-5" style={{ color: '#9ca3af' }}>Total lesson purchases per subject</p>

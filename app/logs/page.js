@@ -3,27 +3,26 @@ import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
 
-// ── Action config ─────────────────────────────────────────────
 const ACTION_CONFIG = {
-  approve_tutor:       { label: 'Approved tutor',     icon: '✓', bg: 'var(--green-bg)',  color: 'var(--green-text)' },
-  reject_tutor:        { label: 'Rejected tutor',     icon: '✕', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
-  process_payout:      { label: 'Processed payout',   icon: '💳', bg: 'var(--blue-bg)',  color: 'var(--blue-text)'  },
-  delete_review:       { label: 'Deleted review',     icon: '🗑', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
-  resolved_report:     { label: 'Resolved report',    icon: '✓', bg: 'var(--green-bg)',  color: 'var(--green-text)' },
-  dismissed_report:    { label: 'Dismissed report',   icon: '—', bg: '#f3f4f6',          color: '#9ca3af'            },
-  under_review_report: { label: 'Under review',       icon: '👁', bg: 'var(--blue-bg)',  color: 'var(--blue-text)'  },
-  flag_lesson:         { label: 'Flagged lesson',     icon: '⚑', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
-  unflag_lesson:       { label: 'Unflagged lesson',   icon: '⚑', bg: 'var(--green-bg)', color: 'var(--green-text)' },
+  approve_tutor:       { label: 'Approved tutor',   icon: '✓', bg: 'var(--green-bg)',  color: 'var(--green-text)' },
+  reject_tutor:        { label: 'Rejected tutor',   icon: '✕', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
+  process_payout:      { label: 'Processed payout', icon: '💳', bg: 'var(--blue-bg)',  color: 'var(--blue-text)'  },
+  delete_review:       { label: 'Deleted review',   icon: '🗑', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
+  resolved_report:     { label: 'Resolved report',  icon: '✓', bg: 'var(--green-bg)',  color: 'var(--green-text)' },
+  dismissed_report:    { label: 'Dismissed report', icon: '—', bg: '#f3f4f6',          color: '#9ca3af'            },
+  under_review_report: { label: 'Under review',     icon: '👁', bg: 'var(--blue-bg)',  color: 'var(--blue-text)'  },
+  flag_lesson:         { label: 'Flagged lesson',   icon: '⚑', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
+  unflag_lesson:       { label: 'Unflagged lesson', icon: '⚑', bg: 'var(--green-bg)', color: 'var(--green-text)' },
 }
 
 const ACTION_KEYS = Object.keys(ACTION_CONFIG)
 
 const TARGET_ICONS = {
-  tutor:           '👤',
-  lesson:          '📹',
-  report:          '⚑',
-  review:          '★',
-  payout_request:  '💳',
+  tutor:          '👤',
+  lesson:         '📹',
+  report:         '⚑',
+  review:         '★',
+  payout_request: '💳',
 }
 
 function fmt(iso) {
@@ -33,13 +32,6 @@ function fmt(iso) {
   })
 }
 
-function fmtDate(iso) {
-  return new Date(iso).toLocaleDateString('en-ZM', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
-}
-
-// Summarise the meta JSON object into a short readable string
 function metaSummary(meta) {
   if (!meta || typeof meta !== 'object') return null
   const parts = []
@@ -64,7 +56,6 @@ export default function LogsPage() {
   const [dateTo, setDateTo]     = useState('')
   const [todayCount, setToday]  = useState(0)
 
-  // Load today's count once on mount
   useEffect(() => {
     const start = new Date()
     start.setHours(0, 0, 0, 0)
@@ -80,10 +71,12 @@ export default function LogsPage() {
 
     let q = supabase
       .from('admin_log')
-      .select(`
-        id, action, target_type, target_id, meta, created_at,
-        profiles ( full_name )
-      `, { count: 'exact' })
+      .select(
+        // FIX: explicit FK hint — admin_log.admin_id references profiles.id
+        `id, action, target_type, target_id, meta, created_at,
+         profiles!admin_id ( full_name )`,
+        { count: 'exact' }
+      )
       .order('created_at', { ascending: false })
       .range(page * PAGE, (page + 1) * PAGE - 1)
 
@@ -102,7 +95,6 @@ export default function LogsPage() {
     setLoading(false)
   }, [page, action, targetType, dateFrom, dateTo])
 
-  // Reset to page 0 when filters change
   useEffect(() => { setPage(0) }, [action, targetType, dateFrom, dateTo])
   useEffect(() => { load() }, [load])
 
@@ -120,7 +112,6 @@ export default function LogsPage() {
     <AdminShell>
       <div className="p-6 space-y-5">
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: 'Total entries', value: totalCount.toLocaleString() },
@@ -139,9 +130,7 @@ export default function LogsPage() {
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Action */}
           <select value={action} onChange={e => setAction(e.target.value)}
             className="text-xs rounded-lg px-3 py-2 outline-none"
             style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)' }}>
@@ -151,7 +140,6 @@ export default function LogsPage() {
             ))}
           </select>
 
-          {/* Target type */}
           <select value={targetType} onChange={e => setTarget(e.target.value)}
             className="text-xs rounded-lg px-3 py-2 outline-none"
             style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)' }}>
@@ -161,7 +149,6 @@ export default function LogsPage() {
             ))}
           </select>
 
-          {/* Date range */}
           <div className="flex items-center gap-2">
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
               className="text-xs rounded-lg px-3 py-2 outline-none"
@@ -173,38 +160,29 @@ export default function LogsPage() {
           </div>
 
           {hasFilters && (
-            <button onClick={clearFilters}
-              className="text-xs underline"
-              style={{ color: 'var(--primary-lit)' }}>
+            <button onClick={clearFilters} className="text-xs underline" style={{ color: 'var(--primary-lit)' }}>
               Clear filters
             </button>
           )}
         </div>
 
-        {/* Table */}
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-12 rounded-xl animate-pulse"
-                style={{ backgroundColor: 'var(--surface)' }} />
+              <div key={i} className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />
             ))}
           </div>
         ) : logs.length === 0 ? (
-          <div className="text-center py-20 rounded-2xl border border-dashed"
-            style={{ borderColor: 'var(--border)' }}>
+          <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
             <p className="text-sm" style={{ color: '#9ca3af' }}>No log entries found.</p>
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden"
-            style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
             <table className="w-full text-xs">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Timestamp', 'Admin', 'Action', 'Target', 'Details'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 font-medium"
-                      style={{ color: '#9ca3af' }}>
-                      {h}
-                    </th>
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -216,23 +194,16 @@ export default function LogsPage() {
                   const isLast     = i === logs.length - 1
 
                   return (
-                    <tr key={log.id}
-                      className="hover:bg-gray-50 transition"
+                    <tr key={log.id} className="hover:bg-gray-50 transition"
                       style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-light)' }}>
-
-                      {/* Timestamp */}
                       <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#9ca3af' }}>
                         {fmt(log.created_at)}
                       </td>
-
-                      {/* Admin */}
                       <td className="px-4 py-3">
                         <span className="font-medium" style={{ color: '#111827' }}>
                           {log.profiles?.full_name ?? 'Admin'}
                         </span>
                       </td>
-
-                      {/* Action badge */}
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium"
                           style={{ backgroundColor: cfg.bg, color: cfg.color }}>
@@ -240,8 +211,6 @@ export default function LogsPage() {
                           {cfg.label}
                         </span>
                       </td>
-
-                      {/* Target */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <span>{targetIcon}</span>
@@ -257,8 +226,6 @@ export default function LogsPage() {
                           </div>
                         </div>
                       </td>
-
-                      {/* Meta summary */}
                       <td className="px-4 py-3" style={{ color: '#6b7280' }}>
                         {summary ?? <span style={{ color: '#d1d5db' }}>—</span>}
                       </td>
@@ -270,7 +237,6 @@ export default function LogsPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}

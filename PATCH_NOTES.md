@@ -1,131 +1,123 @@
-# Bug Fix Patch — Tutor Application Review
+# Production Audit Fix Patch
 
-## Files changed
-- app/registrations/page.js
-- app/dashboard/page.js
-- components/layout/AdminShell.js  (minor: added /bundles to PAGE_TITLES)
+## Files changed (8)
+- app/reports/page.js
+- app/reviews/page.js
+- app/tutors/page.js
+- app/payments/page.js
+- app/analytics/page.js
+- app/api/admin/notify/route.js
+- app/api/topic-requests/route.js
+- app/logs/page.js
 
 ---
 
-## Fix 1 — Ambiguous `profiles` join (tutor names always null)
+## Fix 1 — XSS in admin email templates
 
-**Files:** registrations/page.js, dashboard/page.js
+**Files:** app/api/admin/notify/route.js · app/api/topic-requests/route.js
 
-Supabase couldn't resolve which FK to use when joining `profiles` because
-the `tutors` table has both `id` and `user_id`. The join silently returned
-null, so every tutor appeared as "Tutor" with no name.
+User-supplied values (tutor name, subjects, report reason, topic description) were
+interpolated directly into HTML email strings. A value containing `<script>` tags
+would execute in the admin's email client.
 
-Changed every `profiles(...)` on a tutors query to `profiles!user_id(...)`:
+Added an `esc()` helper that escapes `& < > " '` and applied it to every
+user-supplied value before interpolation:
 
 ```js
-// BEFORE
-.select('id, user_id, ..., profiles(full_name, avatar_url)')
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
 
-// AFTER
-.select('id, user_id, ..., profiles!user_id(full_name, avatar_url)')
-```
-
-Same fix applied to the nested join inside the lessons and reviews queries
-on the dashboard:
-```js
-tutors(profiles!user_id(full_name))
+// Before: `<td>${name}</td>`
+// After:  `<td>${esc(name)}</td>`
 ```
 
 ---
 
-## Fix 2 — Missing `admin_id` in `admin_log` inserts (approve/reject silently fails)
+## Fix 2 — Missing admin_id in admin_log inserts (reports and reviews)
 
-**Files:** registrations/page.js, dashboard/page.js
+**Files:** app/reports/page.js · app/reviews/page.js
 
-`admin_log.admin_id` is NOT NULL. Both `approveTutor` and `rejectTutor` were
-inserting without it, causing the insert to throw. Because the functions
-awaited the insert before calling `load()` / updating state, the entire
-action appeared to hang — the tutor stayed in the list and no feedback
-appeared.
+`admin_log.admin_id` is NOT NULL. The resolve/dismiss/delete actions were
+inserting without it, causing the insert to throw and silently swallow the
+action outcome.
 
-Added `admin_id: user.id` to every `admin_log` insert:
-
-```js
-// BEFORE
-await supabase.from('admin_log').insert({
-  action: 'approve_tutor',
-  target_type: 'tutor',
-  target_id: id,
-})
-
-// AFTER
-const { data: { user } } = await supabase.auth.getUser()
-await supabase.from('admin_log').insert({
-  admin_id:    user.id,   // ← added
-  action:      'approve_tutor',
-  target_type: 'tutor',
-  target_id:   id,
-})
-```
-
-The dashboard `rejectTutor` also now logs `meta: { reason }` for audit
-trail consistency with the registrations page.
+Added `admin_id: user.id` and basic error handling to all inserts. Also
+added an `error` state to `ReportModal` so failures surface in the UI.
 
 ---
 
-## Fix 3 — Ambiguous `profiles` join in `application_notes` + missing `.catch()`
+## Fix 3 — Ambiguous profiles join in tutors/page.js and payments/page.js
 
-**File:** registrations/page.js (ApplicationModal)
+**Files:** app/tutors/page.js · app/payments/page.js
 
-`application_notes` has an `author_id` FK to `profiles`. The generic
-`profiles(full_name)` select was ambiguous, causing the query to fail.
-Because the `Promise.all` had no `.catch()`, one failing query silently
-swallowed all three results — docs, lessons, and notes all came back empty.
+`profiles(full_name)` on the tutors table is ambiguous (tutors has both `id`
+and `user_id` pointing at profiles). Names showed as "—" throughout the Tutors
+and Payments pages.
 
 ```js
-// BEFORE
-supabase.from('application_notes')
-  .select('*, profiles(full_name)')
-
-// AFTER
-supabase.from('application_notes')
-  .select('*, profiles!author_id(full_name)')
+// Before
+.select('id, ..., profiles(full_name)')
+// After
+.select('id, ..., profiles!user_id(full_name)')
 ```
 
-Added `.catch()` to the `Promise.all`:
+Same fix applied to the nested join inside the lessons query and the
+payout_requests → tutors → profiles chain.
+
+---
+
+## Fix 4 — Missing admin_log entries for flag/unflag lesson and revoke tutor
+
+**File:** app/tutors/page.js
+
+`flagLesson()`, `unflagLesson()`, and `revokeTutor()` performed write
+operations but wrote nothing to `admin_log`. The Audit Log page has
+`flag_lesson` and `unflag_lesson` entries in `ACTION_CONFIG` that were never
+populated. All three functions now write a log entry with `admin_id`.
+
+---
+
+## Fix 5 — Analytics delta used wrong array indices
+
+**File:** app/analytics/page.js
+
+`revenueByMonth[5]` and `revenueByMonth[4]` were hardcoded. For 12-month
+and all-time ranges these still pointed to positions 5 and 4, not the last
+two months, producing a wrong MoM delta.
 
 ```js
-Promise.all([...])
-  .then(([{ data: d }, { data: l }, { data: n }]) => { ... })
-  .catch(err => {
-    console.error('[ApplicationModal] failed to load tab data:', err)
-    setLoadError(true)
-  })
+// Before (wrong for non-6m ranges)
+const thisM = revenueByMonth[5]?.value ?? 0
+const lastM = revenueByMonth[4]?.value ?? 0
+
+// After (always the last two entries)
+const last = revenueByMonth[revenueByMonth.length - 1]?.value ?? 0
+const prev = revenueByMonth[revenueByMonth.length - 2]?.value ?? 0
 ```
 
-A red error banner now renders inside the modal when this fires so it's
-visible rather than silently empty.
+---
+
+## Fix 6 — Revenue split removed
+
+**Files:** app/analytics/page.js · app/payments/page.js · app/tutors/page.js
+
+Removed the platform earnings KPI card from analytics (was ~27.5%),
+the three-card revenue split summary from payments (was 30%/70%),
+and the PLATFORM_SHARE constant that was added to tutors/page.js
+in a prior draft.
 
 ---
 
-## Fix 4 — Warning when `user_id` is null on a tutor record
+## Fix 7 — Explicit FK hint in logs/page.js
 
-**File:** registrations/page.js (ApplicationModal, Lessons tab)
+**File:** app/logs/page.js
 
-If `tutors.user_id` is null, the lessons query falls back to `tutors.id`
-(the PK), which is wrong — `lessons.tutor_id` stores the auth user id.
-Added a console warning and a visible amber banner in the Lessons tab
-so this is diagnosable without digging through Supabase logs.
-
----
-
-## Additional: `rejectTutor` on dashboard now logs the reason
-
-**File:** dashboard/page.js
-
-The dashboard quick-reject used `window.prompt` but never wrote the reason
-to `admin_log.meta`. Now consistent with registrations/page.js.
-
----
-
-## Signup flow reminder
-
-The pending-tutor query filters with `.is('rejection_reason', null)`.
-Ensure your main-site signup sets `rejection_reason` to `NULL` (not an
-empty string `''`) when creating the `tutors` row, otherwise newly signed-up
-tutors will never appear in the Pending tab.
+`profiles(full_name)` on admin_log uses the `admin_id` FK. Made it
+explicit with `profiles!admin_id(full_name)` for consistency and
+to guard against future schema changes adding a second FK.

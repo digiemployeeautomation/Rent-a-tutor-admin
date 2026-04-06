@@ -103,16 +103,22 @@ export default function TutorsPage() {
   const [lessonFilter, setLessonFilter] = useState('all')
   const [videoLesson, setVideoLesson]   = useState(null)
 
-  const SUBJECTS = ['Mathematics','English Language','Biology','Chemistry','Physics','Geography','History','Economics','Computer Studies','Additional Mathematics','Commerce','Principles of Accounts']
+  const SUBJECTS = [
+    'Mathematics','English Language','Biology','Chemistry','Physics',
+    'Geography','History','Economics','Computer Studies',
+    'Additional Mathematics','Commerce','Principles of Accounts',
+  ]
 
   const load = useCallback(async () => {
     setLoading(true)
     const [{ data: t }, { data: l }] = await Promise.all([
       supabase.from('tutors')
-        .select('id,user_id,is_featured,badge,subjects,hourly_rate_kwacha,avg_rating,total_reviews,created_at,profiles(full_name)')
+        // FIX: explicit FK hint — tutors.user_id references profiles.id
+        .select('id,user_id,is_featured,badge,subjects,hourly_rate_kwacha,avg_rating,total_reviews,created_at,profiles!user_id(full_name)')
         .eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('lessons')
-        .select('id,title,subject,form_level,price,status,flagged,flag_reason,cloudflare_video_id,purchase_count,created_at,tutor_id,tutors(profiles(full_name))')
+        // FIX: explicit FK hint for nested tutor name
+        .select('id,title,subject,form_level,price,status,flagged,flag_reason,cloudflare_video_id,purchase_count,created_at,tutor_id,tutors(profiles!user_id(full_name))')
         .order('created_at', { ascending: false }).limit(200),
     ])
     setTutors(t ?? [])
@@ -123,28 +129,78 @@ export default function TutorsPage() {
   useEffect(() => { load() }, [load])
 
   async function toggleFeatured(id, current) {
-    await supabase.from('tutors').update({ is_featured: !current }).eq('id', id)
+    const { error } = await supabase.from('tutors').update({ is_featured: !current }).eq('id', id)
+    if (error) { console.error('[toggleFeatured]', error); return }
     setTutors(prev => prev.map(t => t.id === id ? { ...t, is_featured: !current } : t))
   }
 
   async function revokeTutor(id) {
-    if (!window.confirm('Revoke this tutor\'s approval? Their lessons will be hidden.')) return
+    if (!window.confirm("Revoke this tutor's approval? Their lessons will be hidden.")) return
     const tutor = tutors.find(t => t.id === id)
-    await supabase.from('tutors').update({ is_approved: false }).eq('id', id)
+
+    const { error: updateErr } = await supabase.from('tutors').update({ is_approved: false }).eq('id', id)
+    if (updateErr) { alert(`Failed to revoke tutor: ${updateErr.message}`); return }
+
     if (tutor?.user_id) {
       await supabase.from('lessons').update({ status: 'draft' }).eq('tutor_id', tutor.user_id)
     }
+
+    // FIX: log with admin_id
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'reject_tutor',
+      target_type: 'tutor',
+      target_id:   id,
+      meta:        { reason: 'Approval revoked by admin' },
+    })
+
     setTutors(prev => prev.filter(t => t.id !== id))
   }
 
   async function flagLesson(id, reason) {
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('lessons').update({ flagged: true, flag_reason: reason, flagged_by: user.id, flagged_at: new Date().toISOString(), status: 'draft' }).eq('id', id)
+
+    const { error: updateErr } = await supabase.from('lessons').update({
+      flagged:     true,
+      flag_reason: reason || null,
+      flagged_by:  user.id,
+      flagged_at:  new Date().toISOString(),
+      status:      'draft',
+    }).eq('id', id)
+
+    if (updateErr) { alert(`Failed to flag lesson: ${updateErr.message}`); return }
+
+    // FIX: log with admin_id
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'flag_lesson',
+      target_type: 'lesson',
+      target_id:   id,
+      meta:        { flag_reason: reason || null },
+    })
+
     setLessons(prev => prev.map(l => l.id === id ? { ...l, flagged: true, flag_reason: reason, status: 'draft' } : l))
   }
 
   async function unflagLesson(id) {
-    await supabase.from('lessons').update({ flagged: false, flag_reason: null, status: 'active' }).eq('id', id)
+    const { error: updateErr } = await supabase.from('lessons').update({
+      flagged:     false,
+      flag_reason: null,
+      status:      'active',
+    }).eq('id', id)
+
+    if (updateErr) { alert(`Failed to unflag lesson: ${updateErr.message}`); return }
+
+    // FIX: log with admin_id
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      'unflag_lesson',
+      target_type: 'lesson',
+      target_id:   id,
+    })
+
     setLessons(prev => prev.map(l => l.id === id ? { ...l, flagged: false, flag_reason: null, status: 'active' } : l))
   }
 
@@ -157,20 +213,22 @@ export default function TutorsPage() {
   const filteredLessons = lessons.filter(l =>
     (!search || l.title.toLowerCase().includes(search.toLowerCase()) || (l.tutors?.profiles?.full_name ?? '').toLowerCase().includes(search.toLowerCase()))
     && (!subject || l.subject === subject)
-    && (lessonFilter === 'all' || (lessonFilter === 'flagged' && l.flagged) || (lessonFilter === 'no_video' && !l.cloudflare_video_id) || (lessonFilter === 'draft' && l.status === 'draft'))
+    && (lessonFilter === 'all'
+      || (lessonFilter === 'flagged'  && l.flagged)
+      || (lessonFilter === 'no_video' && !l.cloudflare_video_id)
+      || (lessonFilter === 'draft'    && l.status === 'draft'))
   )
 
   return (
     <AdminShell>
       <div className="p-6 space-y-5">
 
-        {/* Stats row */}
         <div className="grid grid-cols-4 gap-3">
           {[
-            { label: 'Approved tutors',  value: tutors.length },
-            { label: 'Featured tutors',  value: tutors.filter(t => t.is_featured).length },
-            { label: 'Active lessons',   value: lessons.filter(l => l.status === 'active').length },
-            { label: 'Flagged lessons',  value: lessons.filter(l => l.flagged).length },
+            { label: 'Approved tutors', value: tutors.length },
+            { label: 'Featured tutors', value: tutors.filter(t => t.is_featured).length },
+            { label: 'Active lessons',  value: lessons.filter(l => l.status === 'active').length },
+            { label: 'Flagged lessons', value: lessons.filter(l => l.flagged).length },
           ].map(s => (
             <div key={s.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
               <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: '#9ca3af' }}>{s.label}</p>
@@ -179,7 +237,6 @@ export default function TutorsPage() {
           ))}
         </div>
 
-        {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2 flex-wrap">
             <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -216,7 +273,6 @@ export default function TutorsPage() {
           </div>
         </div>
 
-        {/* Content */}
         {loading ? (
           <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : tab === 'tutors' ? (
@@ -286,7 +342,7 @@ export default function TutorsPage() {
                           <span className="px-2.5 py-1 rounded-full capitalize text-xs"
                             style={{
                               backgroundColor: l.flagged ? 'var(--red-bg)' : l.status === 'active' ? 'var(--green-bg)' : 'var(--amber-bg)',
-                              color: l.flagged ? 'var(--red-text)' : l.status === 'active' ? 'var(--green-text)' : 'var(--amber-text)',
+                              color:           l.flagged ? 'var(--red-text)' : l.status === 'active' ? 'var(--green-text)' : 'var(--amber-text)',
                             }}>
                             {l.flagged ? 'flagged' : l.status}
                           </span>

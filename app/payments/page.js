@@ -36,10 +36,10 @@ function PayoutModal({ request, onClose, onProcessed }) {
         </div>
         <div className="px-6 py-5 space-y-3">
           {[
-            { label: 'Tutor',   value: request.tutors?.profiles?.full_name ?? '—' },
-            { label: 'Amount',  value: `K${request.amount.toLocaleString()}` },
-            { label: 'Phone',   value: request.phone },
-            { label: 'Requested', value: fmt(request.requested_at) },
+            { label: 'Tutor',     value: request.tutors?.profiles?.full_name ?? '—' },
+            { label: 'Amount',    value: `K${request.amount.toLocaleString()}`       },
+            { label: 'Phone',     value: request.phone                               },
+            { label: 'Requested', value: fmt(request.requested_at)                   },
           ].map(f => (
             <div key={f.label} className="flex justify-between py-1.5"
               style={{ borderBottom: '1px solid var(--border-light)' }}>
@@ -77,13 +77,12 @@ function PayoutModal({ request, onClose, onProcessed }) {
 }
 
 export default function PaymentsPage() {
-  const [tab, setTab]               = useState('purchases')
-  const [purchases, setPurchases]   = useState([])
-  const [bookings, setBookings]     = useState([])
-  const [payouts, setPayouts]       = useState([])
-  const [totals, setTotals]         = useState({ revenue: 0, platform: 0, tutor: 0 })
-  const [loading, setLoading]       = useState(true)
-  const [selected, setSelected]     = useState(null)
+  const [tab, setTab]           = useState('purchases')
+  const [purchases, setPurchases] = useState([])
+  const [bookings, setBookings]   = useState([])
+  const [payouts, setPayouts]     = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [selected, setSelected]   = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -94,17 +93,14 @@ export default function PaymentsPage() {
         supabase.from('bookings')
           .select('id, amount, status, scheduled_at, subject, profiles!student_id(full_name)')
           .order('scheduled_at', { ascending: false }).limit(100),
+        // FIX: explicit FK hint for profiles inside tutors
         supabase.from('payout_requests')
-          .select('id, amount, phone, status, requested_at, processed_at, tutors(id, profiles(full_name))')
+          .select('id, amount, phone, status, requested_at, processed_at, tutors(id, profiles!user_id(full_name))')
           .order('requested_at', { ascending: false }).limit(50),
       ])
-
-      const rows = purch ?? []
-      const total = rows.reduce((s, p) => s + (p.amount_paid ?? 0), 0)
-      setPurchases(rows)
+      setPurchases(purch ?? [])
       setBookings(books ?? [])
       setPayouts(payoutRows ?? [])
-      setTotals({ revenue: total, platform: Math.round(total * 0.3), tutor: Math.round(total * 0.7) })
       setLoading(false)
     }
     load()
@@ -126,25 +122,13 @@ export default function PaymentsPage() {
     <AdminShell>
       <div className="p-6 space-y-6">
 
-        {/* Revenue summary */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'Total lesson revenue', value: `K${totals.revenue.toLocaleString()}` },
-            { label: 'Platform share (30%)',  value: `K${totals.platform.toLocaleString()}` },
-            { label: 'Tutor share (70%)',     value: `K${totals.tutor.toLocaleString()}` },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <div className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: '#9ca3af' }}>{s.label}</div>
-              <div className="font-serif text-2xl font-bold" style={{ color: 'var(--primary)' }}>{s.value}</div>
-            </div>
-          ))}
-        </div>
+        {/* Revenue split removed */}
 
         {/* Tabs */}
         <div className="flex rounded-xl p-1 gap-1 w-fit" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
           {[
-            { key: 'purchases', label: `Purchases (${purchases.length})` },
-            { key: 'bookings',  label: `Bookings (${bookings.length})`   },
+            { key: 'purchases', label: `Purchases (${purchases.length})`                                        },
+            { key: 'bookings',  label: `Bookings (${bookings.length})`                                          },
             { key: 'payouts',   label: `Payouts (${payouts.filter(p => p.status === 'pending').length} pending)` },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}

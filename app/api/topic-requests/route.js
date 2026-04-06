@@ -1,26 +1,4 @@
-// ============================================================
-//  app/api/topic-requests/route.js  —  Main Site
-//
-//  WHERE TO ADD THIS
-//  ─────────────────────────────────────────────────────────
-//  Drop into: app/api/topic-requests/route.js
-//
-//  This is called by TopicRequestForm.js when a student submits.
-//  It:
-//    1. Validates the session (student must be logged in)
-//    2. Saves the request to topic_requests table
-//    3. Fires an email alert to admin via Resend
-//    4. Returns the created request
-//
-//  REQUIREMENTS
-//  ─────────────────────────────────────────────────────────
-//  .env.local additions (same as admin site):
-//    RESEND_API_KEY=re_your_key
-//    ALERT_EMAIL_TO=admin@rentatutor.co.zm
-//    ALERT_EMAIL_FROM=noreply@rentatutor.co.zm
-//    NEXT_PUBLIC_SITE_URL=https://rentatutor.co.zm
-// ============================================================
-
+// app/api/topic-requests/route.js  —  Main Site
 import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
@@ -33,14 +11,32 @@ const SUBJECTS = [
   'Business Studies', 'Computer Science', 'Accounting',
 ]
 
-const VALID_URGENCY  = ['normal', 'urgent', 'exam_prep']
-const VALID_LEVELS   = ['Form 1','Form 2','Form 3','Form 4 (O-Level)','Form 5','Form 6 (A-Level)','Not sure','']
+const VALID_URGENCY = ['normal', 'urgent', 'exam_prep']
+const VALID_LEVELS  = ['Form 1','Form 2','Form 3','Form 4 (O-Level)','Form 5','Form 6 (A-Level)','Not sure','']
+
+// FIX: escape user-supplied strings before inserting into email HTML
+function esc(str) {
+  if (str === null || str === undefined) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
 
 async function sendAdminAlert({ studentName, subject, topic, formLevel, urgency, description, requestId }) {
-  if (!process.env.RESEND_API_KEY) return   // skip silently if not configured
+  if (!process.env.RESEND_API_KEY) return
 
   const urgencyLabel = urgency === 'exam_prep' ? '🔴 EXAM PREP' : urgency === 'urgent' ? '🟡 Urgent' : '🟢 Normal'
   const adminUrl     = `${process.env.NEXT_PUBLIC_SITE_URL?.replace('rentatutor', 'admin.rentatutor') ?? 'https://admin.rentatutor.co.zm'}/topic-requests`
+
+  // FIX: escape every user-supplied value
+  const safeStudent  = esc(studentName)
+  const safeSubject  = esc(subject)
+  const safeTopic    = esc(topic)
+  const safeLevel    = esc(formLevel)
+  const safeDesc     = esc(description)
 
   await fetch('https://api.resend.com/emails', {
     method:  'POST',
@@ -51,26 +47,23 @@ async function sendAdminAlert({ studentName, subject, topic, formLevel, urgency,
     body: JSON.stringify({
       from:    process.env.ALERT_EMAIL_FROM ?? 'noreply@rentatutor.co.zm',
       to:      [process.env.ALERT_EMAIL_TO  ?? 'admin@rentatutor.co.zm'],
-      subject: `📚 New topic request — ${subject}: ${topic}`,
+      subject: `📚 New topic request — ${safeSubject}: ${safeTopic}`,
       html: `
         <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
           <h2 style="color:#173404;font-family:Georgia,serif;margin-bottom:4px;">New Topic Request</h2>
           <p style="color:#6b7280;margin-top:0;">A student needs help with a specific topic.</p>
-
           <table style="width:100%;border-collapse:collapse;margin:20px 0;background:#f6faf2;border-radius:12px;overflow:hidden;">
-            <tr><td style="padding:10px 16px;color:#9ca3af;font-size:13px;width:120px;">Student</td><td style="padding:10px 16px;font-weight:600;">${studentName}</td></tr>
-            <tr style="background:#eaf3de;"><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Subject</td><td style="padding:10px 16px;font-weight:600;">${subject}</td></tr>
-            <tr><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Topic</td><td style="padding:10px 16px;font-weight:600;">${topic}</td></tr>
-            <tr style="background:#eaf3de;"><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Form level</td><td style="padding:10px 16px;">${formLevel || '—'}</td></tr>
+            <tr><td style="padding:10px 16px;color:#9ca3af;font-size:13px;width:120px;">Student</td><td style="padding:10px 16px;font-weight:600;">${safeStudent}</td></tr>
+            <tr style="background:#eaf3de;"><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Subject</td><td style="padding:10px 16px;font-weight:600;">${safeSubject}</td></tr>
+            <tr><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Topic</td><td style="padding:10px 16px;font-weight:600;">${safeTopic}</td></tr>
+            <tr style="background:#eaf3de;"><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Form level</td><td style="padding:10px 16px;">${safeLevel || '—'}</td></tr>
             <tr><td style="padding:10px 16px;color:#9ca3af;font-size:13px;">Urgency</td><td style="padding:10px 16px;">${urgencyLabel}</td></tr>
-            ${description ? `<tr style="background:#eaf3de;"><td style="padding:10px 16px;color:#9ca3af;font-size:13px;vertical-align:top;">Description</td><td style="padding:10px 16px;">${description}</td></tr>` : ''}
+            ${safeDesc ? `<tr style="background:#eaf3de;"><td style="padding:10px 16px;color:#9ca3af;font-size:13px;vertical-align:top;">Description</td><td style="padding:10px 16px;">${safeDesc}</td></tr>` : ''}
           </table>
-
           <a href="${adminUrl}"
              style="display:inline-block;background:#27500a;color:#c0dd97;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
             View in admin console →
           </a>
-
           <p style="color:#9ca3af;font-size:12px;margin-top:24px;">
             Tutors on the platform have been notified and can respond directly.
             You can close or flag this request from the admin console.
@@ -90,7 +83,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'You must be logged in to submit a request.' }, { status: 401 })
     }
 
-    // Confirm user is a student
     const { data: profile } = await supabase
       .from('profiles').select('full_name, role').eq('id', user.id).single()
 
@@ -100,7 +92,6 @@ export async function POST(request) {
 
     const { subject, topic, formLevel, description, urgency } = await request.json()
 
-    // Validate
     if (!subject || !SUBJECTS.includes(subject)) {
       return NextResponse.json({ error: 'Please select a valid subject.' }, { status: 400 })
     }
@@ -117,7 +108,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid urgency.' }, { status: 400 })
     }
 
-    // Rate limit: max 3 open requests per student at a time
     const { count: openCount } = await supabase
       .from('topic_requests')
       .select('*', { count: 'exact', head: true })
@@ -130,7 +120,6 @@ export async function POST(request) {
       }, { status: 429 })
     }
 
-    // Insert
     const { data: newRequest, error: insertErr } = await supabase
       .from('topic_requests')
       .insert({
@@ -149,7 +138,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to save request. Please try again.' }, { status: 500 })
     }
 
-    // Alert admin (non-blocking)
     sendAdminAlert({
       studentName: profile?.full_name ?? 'A student',
       subject,

@@ -15,16 +15,37 @@ const TYPE_ICONS = { lesson: '📹', tutor: '👤', review: '⭐', booking: '�
 function ReportModal({ report, onClose, onUpdate }) {
   const [notes, setNotes]   = useState(report.admin_notes ?? '')
   const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState('')
 
   async function act(status) {
     setSaving(true)
+    setError('')
+    // FIX: fetch admin user first so admin_id is never missing
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('reports').update({
-      status, admin_notes: notes,
+
+    const { error: updateErr } = await supabase.from('reports').update({
+      status,
+      admin_notes: notes,
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
     }).eq('id', report.id)
-    await supabase.from('admin_log').insert({ action: `${status}_report`, target_type: 'report', target_id: report.id })
+
+    if (updateErr) {
+      setError(updateErr.message)
+      setSaving(false)
+      return
+    }
+
+    // FIX: include admin_id so NOT NULL constraint is satisfied
+    const { error: logErr } = await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      `${status}_report`,
+      target_type: 'report',
+      target_id:   report.id,
+      meta:        { notes: notes || null },
+    })
+    if (logErr) console.error('[admin_log insert]', logErr)
+
     onUpdate(report.id, status, notes)
     setSaving(false)
     onClose()
@@ -84,6 +105,8 @@ function ReportModal({ report, onClose, onUpdate }) {
               className="w-full text-xs rounded-xl px-4 py-3 outline-none resize-none"
               style={{ border: '1px solid var(--border)' }} />
           </div>
+
+          {error && <p className="text-xs" style={{ color: 'var(--red-text)' }}>{error}</p>}
         </div>
 
         <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}>
@@ -160,8 +183,6 @@ export default function ReportsPage() {
   return (
     <AdminShell>
       <div className="p-6 space-y-5">
-
-        {/* Status cards */}
         <div className="grid grid-cols-4 gap-3">
           {STATUS_TABS.map(t => {
             const sc = STATUS[t.key]
@@ -176,7 +197,6 @@ export default function ReportsPage() {
           })}
         </div>
 
-        {/* Filters */}
         <div className="flex items-center gap-3">
           <select value={type} onChange={e => setType(e.target.value)}
             className="text-xs rounded-lg px-3 py-2 outline-none"
@@ -190,7 +210,6 @@ export default function ReportsPage() {
             style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)', width: 220 }} />
         </div>
 
-        {/* List */}
         {loading ? (
           <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : reports.length === 0 ? (
