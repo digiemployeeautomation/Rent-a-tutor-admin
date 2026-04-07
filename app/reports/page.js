@@ -2,13 +2,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
+import { REPORT_STATUS_STYLES } from '@/lib/constants'
 
-const STATUS = {
-  pending:      { label: 'Pending',       bg: 'var(--amber-bg)',  color: 'var(--amber-text)' },
-  under_review: { label: 'Under review',  bg: 'var(--blue-bg)',   color: 'var(--blue-text)'  },
-  resolved:     { label: 'Resolved',      bg: 'var(--green-bg)',  color: 'var(--green-text)' },
-  dismissed:    { label: 'Dismissed',     bg: '#f3f4f6',          color: '#9ca3af'            },
-}
+const STATUS = REPORT_STATUS_STYLES
 
 const TYPE_ICONS = { lesson: '📹', tutor: '👤', review: '⭐', booking: '📅', other: '📋' }
 
@@ -31,7 +27,8 @@ function ReportModal({ report, onClose, onUpdate }) {
     }).eq('id', report.id)
 
     if (updateErr) {
-      setError(updateErr.message)
+      console.error('[reports] update error:', updateErr)
+      setError('Failed to update report. Please try again.')
       setSaving(false)
       return
     }
@@ -222,6 +219,8 @@ export default function ReportsPage() {
               const sc = STATUS[r.status] ?? STATUS.pending
               return (
                 <div key={r.id}
+                  role="button" tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(r) } }}
                   className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl cursor-pointer hover:opacity-90 transition"
                   style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}
                   onClick={() => setSelected(r)}>

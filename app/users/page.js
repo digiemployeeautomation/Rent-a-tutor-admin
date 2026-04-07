@@ -2,10 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
-
-function fmt(iso) {
-  return iso ? new Date(iso).toLocaleDateString('en-ZM', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
-}
+import { fmt } from '@/lib/utils'
 
 function UserDetailModal({ user: u, onClose }) {
   const [activity, setActivity] = useState(null)
@@ -16,12 +13,16 @@ function UserDetailModal({ user: u, onClose }) {
       Promise.all([
         supabase.from('lesson_purchases').select('id, amount_paid, purchased_at, lessons(title, subject)').eq('student_id', u.id).order('purchased_at', { ascending: false }).limit(10),
         supabase.from('bookings').select('id, subject, scheduled_at, status, amount').eq('student_id', u.id).order('scheduled_at', { ascending: false }).limit(5),
-      ]).then(([{ data: p }, { data: b }]) => setActivity({ purchases: p ?? [], bookings: b ?? [] }))
+      ])
+        .then(([{ data: p }, { data: b }]) => setActivity({ purchases: p ?? [], bookings: b ?? [] }))
+        .catch(err => console.error('[UserDetail student]', err))
     } else if (u.role === 'tutor') {
       Promise.all([
         supabase.from('lessons').select('id, title, subject, status, purchase_count, price').eq('tutor_id', u.id).order('created_at', { ascending: false }).limit(10),
         supabase.from('bookings').select('id, subject, scheduled_at, status, amount').eq('tutor_id', u.id).order('scheduled_at', { ascending: false }).limit(5),
-      ]).then(([{ data: l }, { data: b }]) => setActivity({ lessons: l ?? [], bookings: b ?? [] }))
+      ])
+        .then(([{ data: l }, { data: b }]) => setActivity({ lessons: l ?? [], bookings: b ?? [] }))
+        .catch(err => console.error('[UserDetail tutor]', err))
     }
   }, [u])
 

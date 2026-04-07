@@ -2,28 +2,12 @@
 import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-
-const SUBJECTS = [
-  'Mathematics', 'English Language', 'Biology', 'Chemistry', 'Physics',
-  'Geography', 'History', 'Civic Education', 'Computer Studies',
-  'Additional Mathematics', 'Commerce', 'Principles of Accounts',
-  'French', 'Further Mathematics', 'Economics', 'Literature in English',
-  'Business Studies', 'Computer Science', 'Accounting',
-]
+import { rateLimit } from '@/lib/rate-limit'
+import { SUBJECTS } from '@/lib/constants'
+import { esc } from '@/lib/utils'
 
 const VALID_URGENCY = ['normal', 'urgent', 'exam_prep']
 const VALID_LEVELS  = ['Form 1','Form 2','Form 3','Form 4 (O-Level)','Form 5','Form 6 (A-Level)','Not sure','']
-
-// FIX: escape user-supplied strings before inserting into email HTML
-function esc(str) {
-  if (str === null || str === undefined) return ''
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-}
 
 async function sendAdminAlert({ studentName, subject, topic, formLevel, urgency, description, requestId }) {
   if (!process.env.RESEND_API_KEY) return
@@ -82,6 +66,10 @@ export async function POST(request) {
     if (!user) {
       return NextResponse.json({ error: 'You must be logged in to submit a request.' }, { status: 401 })
     }
+
+    // Rate limit: 5 requests per minute per user
+    const { limited } = rateLimit(`topic-req:${user.id}`, 5)
+    if (limited) return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
 
     const { data: profile } = await supabase
       .from('profiles').select('full_name, role').eq('id', user.id).single()
@@ -162,6 +150,11 @@ export async function GET(request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
+    // Check role — students can only see their own, tutors see open requests, admins see all
+    const { data: profile } = await supabase
+      .from('profiles').select('role').eq('id', user.id).single()
+    const role = profile?.role
+
     const { searchParams } = new URL(request.url)
     const mine = searchParams.get('mine') === 'true'
 
@@ -176,10 +169,18 @@ export async function GET(request) {
       `)
       .order('created_at', { ascending: false })
 
-    if (mine) query = query.eq('student_id', user.id)
+    // Students can only see their own requests
+    if (role === 'student' || mine) {
+      query = query.eq('student_id', user.id)
+    }
+    // Tutors see only open/in_progress requests (not closed/covered)
+    else if (role === 'tutor') {
+      query = query.in('status', ['open', 'in_progress'])
+    }
+    // Admins see all — no additional filter
 
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to load requests.' }, { status: 500 })
 
     return NextResponse.json({ requests: data ?? [] })
 

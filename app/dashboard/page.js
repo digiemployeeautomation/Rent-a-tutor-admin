@@ -39,6 +39,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
+      try {
       const [
         { count: approvedTutors },
         // Only count genuinely pending tutors (rejection_reason IS NULL).
@@ -96,49 +97,61 @@ export default function DashboardPage() {
       setReports(reports ?? [])
       setLessons(lessonRows ?? [])
       setReviews(reviewRows ?? [])
+      } catch (err) {
+        console.error('[dashboard] load error:', err)
+      }
     }
     load()
   }, [])
 
   async function approveTutor(id) {
-    const tutor = pendingTutors.find(t => t.id === id)
-    await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
-    // lessons.tutor_id = auth user id, not tutors.id
-    if (tutor?.user_id) {
-      await supabase.from('lessons')
-        .update({ status: 'active' })
-        .eq('tutor_id', tutor.user_id)
-        .eq('status', 'draft')
+    try {
+      const tutor = pendingTutors.find(t => t.id === id)
+      const { error } = await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
+      if (error) { console.error('[approveTutor]', error); alert('Failed to approve tutor.'); return }
+      if (tutor?.user_id) {
+        await supabase.from('lessons')
+          .update({ status: 'active' })
+          .eq('tutor_id', tutor.user_id)
+          .eq('status', 'draft')
+      }
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('admin_log').insert({
+        admin_id:    user.id,
+        action:      'approve_tutor',
+        target_type: 'tutor',
+        target_id:   id,
+      })
+      setPending(p => p.filter(t => t.id !== id))
+      setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
+    } catch (err) {
+      console.error('[approveTutor]', err)
+      alert('Failed to approve tutor.')
     }
-    // FIX 2: include admin_id in audit log
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('admin_log').insert({
-      admin_id:    user.id,
-      action:      'approve_tutor',
-      target_type: 'tutor',
-      target_id:   id,
-    })
-    setPending(p => p.filter(t => t.id !== id))
-    setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
   }
 
   async function rejectTutor(id) {
     const reason = window.prompt('Rejection reason (optional):')
-    if (reason === null) return   // user cancelled the prompt
-    await supabase.from('tutors')
-      .update({ rejection_reason: reason || 'Application not approved' })
-      .eq('id', id)
-    // FIX 2: include admin_id in audit log
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('admin_log').insert({
-      admin_id:    user.id,
-      action:      'reject_tutor',
-      target_type: 'tutor',
-      target_id:   id,
-      meta:        { reason: reason || 'Application not approved' },
-    })
-    setPending(p => p.filter(t => t.id !== id))
-    setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
+    if (reason === null) return
+    try {
+      const { error } = await supabase.from('tutors')
+        .update({ rejection_reason: reason || 'Application not approved' })
+        .eq('id', id)
+      if (error) { console.error('[rejectTutor]', error); alert('Failed to reject tutor.'); return }
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('admin_log').insert({
+        admin_id:    user.id,
+        action:      'reject_tutor',
+        target_type: 'tutor',
+        target_id:   id,
+        meta:        { reason: reason || 'Application not approved' },
+      })
+      setPending(p => p.filter(t => t.id !== id))
+      setStats(s => ({ ...s, pendingCount: (s.pendingCount ?? 1) - 1 }))
+    } catch (err) {
+      console.error('[rejectTutor]', err)
+      alert('Failed to reject tutor.')
+    }
   }
 
   return (

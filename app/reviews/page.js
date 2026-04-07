@@ -32,7 +32,7 @@ export default function ReviewsPage() {
     const { error: deleteErr } = await supabase.from('reviews').delete().eq('id', id)
     if (deleteErr) {
       console.error('[deleteReview]', deleteErr)
-      alert(`Failed to delete review: ${deleteErr.message}`)
+      alert('Failed to delete review. Please try again.')
       setDeleting(null)
       return
     }

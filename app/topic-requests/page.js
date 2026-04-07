@@ -2,18 +2,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
+import { SUBJECTS, URGENCY_STYLES, TOPIC_STATUS_STYLES } from '@/lib/constants'
 
-const URGENCY_STYLE = {
-  normal:    { label: 'Normal',    bg: '#f3f4f6',               color: '#6b7280'         },
-  urgent:    { label: 'Urgent',    bg: 'var(--amber-bg)',        color: 'var(--amber-text)' },
-  exam_prep: { label: 'Exam prep', bg: 'var(--red-bg)',          color: 'var(--red-text)'   },
-}
-const STATUS_STYLE = {
-  open:        { label: 'Open',        bg: 'var(--green-bg)',  color: 'var(--green-text)' },
-  in_progress: { label: 'Responding',  bg: 'var(--blue-bg)',   color: 'var(--blue-text)'  },
-  covered:     { label: 'Covered',     bg: '#f3f4f6',          color: '#6b7280'            },
-  closed:      { label: 'Closed',      bg: '#f3f4f6',          color: '#9ca3af'            },
-}
+const URGENCY_STYLE = URGENCY_STYLES
+const STATUS_STYLE  = TOPIC_STATUS_STYLES
 
 function RequestDetailModal({ request, onClose, onStatusChange }) {
   const [responses, setResponses] = useState([])
@@ -27,7 +19,11 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
       .select('id, message, proposed_rate, status, created_at, tutors(id, profiles(full_name))')
       .eq('request_id', request.id)
       .order('created_at', { ascending: true })
-      .then(({ data }) => { setResponses(data ?? []); setLoadingResp(false) })
+      .then(({ data, error }) => {
+        if (error) console.error('[topic-request responses]', error)
+        setResponses(data ?? []); setLoadingResp(false)
+      })
+      .catch(err => { console.error('[topic-request responses]', err); setLoadingResp(false) })
   }, [request.id])
 
   async function updateStatus(status) {
@@ -175,8 +171,6 @@ export default function TopicRequestsPage() {
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
   const [counts, setCounts]     = useState({})
-
-  const SUBJECTS = ['Mathematics','English Language','Biology','Chemistry','Physics','Geography','History','Economics','Computer Studies']
 
   const load = useCallback(async () => {
     setLoading(true)

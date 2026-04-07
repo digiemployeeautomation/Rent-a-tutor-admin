@@ -1,8 +1,17 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 
+function withSecurityHeaders(response) {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+  return response
+}
+
 export async function middleware(request) {
   const response = NextResponse.next()
+  withSecurityHeaders(response)
   const { pathname } = request.nextUrl
 
   // Public routes

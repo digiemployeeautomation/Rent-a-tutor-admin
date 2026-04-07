@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
+import { SUBJECTS } from '@/lib/constants'
 
 function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
   const [reason, setReason]   = useState(lesson.flag_reason ?? '')
@@ -103,12 +104,6 @@ export default function TutorsPage() {
   const [lessonFilter, setLessonFilter] = useState('all')
   const [videoLesson, setVideoLesson]   = useState(null)
 
-  const SUBJECTS = [
-    'Mathematics','English Language','Biology','Chemistry','Physics',
-    'Geography','History','Economics','Computer Studies',
-    'Additional Mathematics','Commerce','Principles of Accounts',
-  ]
-
   const load = useCallback(async () => {
     setLoading(true)
     const [{ data: t }, { data: l }] = await Promise.all([
@@ -139,7 +134,7 @@ export default function TutorsPage() {
     const tutor = tutors.find(t => t.id === id)
 
     const { error: updateErr } = await supabase.from('tutors').update({ is_approved: false }).eq('id', id)
-    if (updateErr) { alert(`Failed to revoke tutor: ${updateErr.message}`); return }
+    if (updateErr) { console.error('[revokeTutor]', updateErr); alert('Failed to revoke tutor. Please try again.'); return }
 
     if (tutor?.user_id) {
       await supabase.from('lessons').update({ status: 'draft' }).eq('tutor_id', tutor.user_id)
@@ -169,7 +164,7 @@ export default function TutorsPage() {
       status:      'draft',
     }).eq('id', id)
 
-    if (updateErr) { alert(`Failed to flag lesson: ${updateErr.message}`); return }
+    if (updateErr) { console.error('[flagLesson]', updateErr); alert('Failed to flag lesson. Please try again.'); return }
 
     // FIX: log with admin_id
     await supabase.from('admin_log').insert({
@@ -190,7 +185,7 @@ export default function TutorsPage() {
       status:      'active',
     }).eq('id', id)
 
-    if (updateErr) { alert(`Failed to unflag lesson: ${updateErr.message}`); return }
+    if (updateErr) { console.error('[unflagLesson]', updateErr); alert('Failed to unflag lesson. Please try again.'); return }
 
     // FIX: log with admin_id
     const { data: { user } } = await supabase.auth.getUser()

@@ -32,7 +32,7 @@ function ComposeModal({ onClose, onCreated }) {
       created_by: user.id,
     }).select('*').single()
 
-    if (err) { setError(err.message); setSaving(false); return }
+    if (err) { console.error('[announcements]', err); setError('Failed to save announcement. Please try again.'); setSaving(false); return }
     onCreated(data)
     onClose()
   }
@@ -132,17 +132,23 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     supabase.from('announcements')
       .select('*').order('created_at', { ascending: false })
-      .then(({ data }) => { setAnnouncements(data ?? []); setLoading(false) })
+      .then(({ data, error }) => {
+        if (error) console.error('[announcements] load error:', error)
+        setAnnouncements(data ?? []); setLoading(false)
+      })
+      .catch(err => { console.error('[announcements]', err); setLoading(false) })
   }, [])
 
   async function togglePublished(id, current) {
-    await supabase.from('announcements').update({ published: !current, sent_at: !current ? new Date().toISOString() : null }).eq('id', id)
+    const { error } = await supabase.from('announcements').update({ published: !current, sent_at: !current ? new Date().toISOString() : null }).eq('id', id)
+    if (error) { console.error('[togglePublished]', error); alert('Failed to update announcement.'); return }
     setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, published: !current } : a))
   }
 
   async function deleteAnnouncement(id) {
     if (!window.confirm('Delete this announcement?')) return
-    await supabase.from('announcements').delete().eq('id', id)
+    const { error } = await supabase.from('announcements').delete().eq('id', id)
+    if (error) { console.error('[deleteAnnouncement]', error); alert('Failed to delete announcement.'); return }
     setAnnouncements(prev => prev.filter(a => a.id !== id))
   }
 

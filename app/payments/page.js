@@ -2,10 +2,8 @@
 import { useState, useEffect } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
-
-function fmt(iso) {
-  return new Date(iso).toLocaleDateString('en-ZM', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+import { PAYOUT_STATUS_STYLES } from '@/lib/constants'
+import { fmt } from '@/lib/utils'
 
 function PayoutModal({ request, onClose, onProcessed }) {
   const [loading, setLoading] = useState(false)
@@ -86,21 +84,25 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: purch }, { data: books }, { data: payoutRows }] = await Promise.all([
-        supabase.from('lesson_purchases')
-          .select('id, amount_paid, purchased_at, transaction_id, lessons(title, subject, price), profiles(full_name)')
-          .order('purchased_at', { ascending: false }).limit(100),
-        supabase.from('bookings')
-          .select('id, amount, status, scheduled_at, subject, profiles!student_id(full_name)')
-          .order('scheduled_at', { ascending: false }).limit(100),
-        // FIX: explicit FK hint for profiles inside tutors
-        supabase.from('payout_requests')
-          .select('id, amount, phone, status, requested_at, processed_at, tutors(id, profiles!user_id(full_name))')
-          .order('requested_at', { ascending: false }).limit(50),
-      ])
-      setPurchases(purch ?? [])
-      setBookings(books ?? [])
-      setPayouts(payoutRows ?? [])
+      try {
+        const [{ data: purch }, { data: books }, { data: payoutRows }] = await Promise.all([
+          supabase.from('lesson_purchases')
+            .select('id, amount_paid, purchased_at, transaction_id, lessons(title, subject, price), profiles(full_name)')
+            .order('purchased_at', { ascending: false }).limit(100),
+          supabase.from('bookings')
+            .select('id, amount, status, scheduled_at, subject, profiles!student_id(full_name)')
+            .order('scheduled_at', { ascending: false }).limit(100),
+          // FIX: explicit FK hint for profiles inside tutors
+          supabase.from('payout_requests')
+            .select('id, amount, phone, status, requested_at, processed_at, tutors(id, profiles!user_id(full_name))')
+            .order('requested_at', { ascending: false }).limit(50),
+        ])
+        setPurchases(purch ?? [])
+        setBookings(books ?? [])
+        setPayouts(payoutRows ?? [])
+      } catch (err) {
+        console.error('[payments] load error:', err)
+      }
       setLoading(false)
     }
     load()
@@ -111,12 +113,7 @@ export default function PaymentsPage() {
     setSelected(null)
   }
 
-  const PAYOUT_STATUS = {
-    pending:    { bg: 'var(--amber-bg)',  color: 'var(--amber-text)' },
-    processing: { bg: 'var(--blue-bg)',   color: 'var(--blue-text)'  },
-    completed:  { bg: 'var(--green-bg)',  color: 'var(--green-text)' },
-    failed:     { bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
-  }
+  const PAYOUT_STATUS = PAYOUT_STATUS_STYLES
 
   return (
     <AdminShell>

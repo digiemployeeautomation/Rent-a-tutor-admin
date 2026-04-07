@@ -1,19 +1,10 @@
 // app/api/admin/notify/route.js
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const RESEND_API = 'https://api.resend.com/emails'
 
-// Escape characters that are meaningful in HTML to prevent XSS in emails.
-// Applies to every user-supplied value interpolated into an HTML string.
-function esc(str) {
-  if (str === null || str === undefined) return ''
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-}
+import { esc } from '@/lib/utils'
 
 async function sendEmail({ subject, html }) {
   const res = await fetch(RESEND_API, {
@@ -34,9 +25,14 @@ async function sendEmail({ subject, html }) {
 
 export async function POST(request) {
   try {
+    // Rate limit: 30 webhook calls per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const { limited } = rateLimit(`notify:${ip}`, 30)
+    if (limited) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
     const secret = request.headers.get('x-webhook-secret')
-    if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
-      return NextResponse.json({ error: 'Invalid secret' }, { status: 401 })
+    if (!process.env.WEBHOOK_SECRET || secret !== process.env.WEBHOOK_SECRET) {
+      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
     }
 
     const { type, payload } = await request.json()

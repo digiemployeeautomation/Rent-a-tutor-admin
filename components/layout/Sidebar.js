@@ -52,6 +52,7 @@ export default function Sidebar({ badges = {} }) {
           </Link>
         )}
         <button onClick={() => setCollapsed(c => !c)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition hover:opacity-80"
           style={{ color: 'var(--sidebar-muted)', marginLeft: collapsed ? 'auto' : 0 }}>
           {collapsed ? '→' : '←'}

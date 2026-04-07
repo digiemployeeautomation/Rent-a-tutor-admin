@@ -460,6 +460,8 @@ export default function RegistrationsPage() {
               const docCount = [t.selfie_path, t.national_id_front_path, t.national_id_back_path].filter(Boolean).length
               return (
                 <div key={t.id}
+                  role="button" tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(t) } }}
                   className="flex items-center justify-between px-5 py-4 gap-4 cursor-pointer hover:bg-gray-50 transition"
                   style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--border-light)' : 'none' }}
                   onClick={() => setSelected(t)}>

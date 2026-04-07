@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
+import { fmtDateTime } from '@/lib/utils'
 
 const ACTION_CONFIG = {
   approve_tutor:       { label: 'Approved tutor',   icon: '✓', bg: 'var(--green-bg)',  color: 'var(--green-text)' },
@@ -23,13 +24,6 @@ const TARGET_ICONS = {
   report:         '⚑',
   review:         '★',
   payout_request: '💳',
-}
-
-function fmt(iso) {
-  return new Date(iso).toLocaleDateString('en-ZM', {
-    day: 'numeric', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  })
 }
 
 function metaSummary(meta) {
@@ -64,6 +58,7 @@ export default function LogsPage() {
       .select('*', { count: 'exact', head: true })
       .gte('created_at', start.toISOString())
       .then(({ count }) => setToday(count ?? 0))
+      .catch(err => console.error('[logs today count]', err))
   }, [])
 
   const load = useCallback(async () => {
@@ -197,7 +192,7 @@ export default function LogsPage() {
                     <tr key={log.id} className="hover:bg-gray-50 transition"
                       style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-light)' }}>
                       <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#9ca3af' }}>
-                        {fmt(log.created_at)}
+                        {fmtDateTime(log.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-medium" style={{ color: '#111827' }}>

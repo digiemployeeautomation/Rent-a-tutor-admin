@@ -23,9 +23,13 @@ function CouponModal({ coupon, onClose, onSaved }) {
 
   async function handleSave() {
     if (!code.trim()) { setError('Coupon code is required.'); return }
-    if (!value || isNaN(parseFloat(value))) { setError('Discount value is required.'); return }
-    if (dType === 'percent' && (parseFloat(value) <= 0 || parseFloat(value) > 100)) {
+    const numValue = parseFloat(value)
+    if (!value || isNaN(numValue) || numValue <= 0) { setError('Discount value must be a positive number.'); return }
+    if (dType === 'percent' && numValue > 100) {
       setError('Percentage must be between 1 and 100.'); return
+    }
+    if (dType === 'fixed' && numValue > 50000) {
+      setError('Fixed discount seems too high.'); return
     }
     setSaving(true)
     setError('')
@@ -51,7 +55,7 @@ function CouponModal({ coupon, onClose, onSaved }) {
       result = { data, error: e }
     }
 
-    if (result.error) { setError(result.error.message); setSaving(false); return }
+    if (result.error) { console.error('[coupons]', result.error); setError('Failed to save coupon. Please check the code is unique and try again.'); setSaving(false); return }
     onSaved(result.data, editing)
     onClose()
   }
@@ -177,17 +181,23 @@ export default function CouponsPage() {
 
   useEffect(() => {
     supabase.from('coupons').select('*').order('created_at', { ascending: false })
-      .then(({ data }) => { setCoupons(data ?? []); setLoading(false) })
+      .then(({ data, error }) => {
+        if (error) console.error('[coupons] load error:', error)
+        setCoupons(data ?? []); setLoading(false)
+      })
+      .catch(err => { console.error('[coupons]', err); setLoading(false) })
   }, [])
 
   async function toggleActive(id, current) {
-    await supabase.from('coupons').update({ is_active: !current }).eq('id', id)
+    const { error } = await supabase.from('coupons').update({ is_active: !current }).eq('id', id)
+    if (error) { console.error('[toggleActive]', error); alert('Failed to update coupon.'); return }
     setCoupons(prev => prev.map(c => c.id === id ? { ...c, is_active: !current } : c))
   }
 
   async function deleteCoupon(id) {
     if (!window.confirm('Delete this coupon?')) return
-    await supabase.from('coupons').delete().eq('id', id)
+    const { error } = await supabase.from('coupons').delete().eq('id', id)
+    if (error) { console.error('[deleteCoupon]', error); alert('Failed to delete coupon.'); return }
     setCoupons(prev => prev.filter(c => c.id !== id))
   }
 
