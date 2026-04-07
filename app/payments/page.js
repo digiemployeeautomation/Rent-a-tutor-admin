@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
 import { PAYOUT_STATUS_STYLES } from '@/lib/constants'
@@ -8,8 +8,11 @@ import { fmt } from '@/lib/utils'
 function PayoutModal({ request, onClose, onProcessed }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult]   = useState(null)
+  const processing = useRef(false)
 
   async function processPayout() {
+    if (processing.current) return
+    processing.current = true
     setLoading(true)
     const res = await fetch('/api/admin/payout', {
       method: 'POST',

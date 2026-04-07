@@ -18,7 +18,7 @@ export async function POST(request) {
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
     // Rate limit: 10 payout attempts per minute per admin
-    const { limited } = rateLimit(`payout:${user.id}`, 10)
+    const { limited } = await rateLimit(`payout:${user.id}`, 10)
     if (limited) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 })
 
     // Double-check admin role server-side

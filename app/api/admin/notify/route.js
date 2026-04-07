@@ -27,7 +27,7 @@ export async function POST(request) {
   try {
     // Rate limit: 30 webhook calls per minute per IP
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-    const { limited } = rateLimit(`notify:${ip}`, 30)
+    const { limited } = await rateLimit(`notify:${ip}`, 30)
     if (limited) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const secret = request.headers.get('x-webhook-secret')

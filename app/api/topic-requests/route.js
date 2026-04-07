@@ -68,7 +68,7 @@ export async function POST(request) {
     }
 
     // Rate limit: 5 requests per minute per user
-    const { limited } = rateLimit(`topic-req:${user.id}`, 5)
+    const { limited } = await rateLimit(`topic-req:${user.id}`, 5)
     if (limited) return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
 
     const { data: profile } = await supabase
