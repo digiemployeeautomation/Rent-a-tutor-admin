@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
 import { SUBJECTS } from '@/lib/constants'
+import { resolveVideoSrc } from '@/lib/utils'
 
 function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
   const [reason, setReason]   = useState(lesson.flag_reason ?? '')
@@ -34,14 +35,19 @@ function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
         </div>
 
         <div style={{ aspectRatio: '16/9', backgroundColor: '#0a0a0a' }}>
-          {lesson.cloudflare_video_id
-            ? <iframe src={`https://iframe.cloudflarestream.com/${lesson.cloudflare_video_id}`}
-                className="w-full h-full" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+          {(() => {
+            const { src } = resolveVideoSrc(lesson.cloudflare_video_id)
+            if (src) return (
+              <iframe src={src} className="w-full h-full"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen title={lesson.title} />
-            : <div className="w-full h-full flex items-center justify-center text-sm" style={{ color: '#6b7280' }}>
+            )
+            return (
+              <div className="w-full h-full flex items-center justify-center text-sm" style={{ color: '#6b7280' }}>
                 No video uploaded yet
               </div>
-          }
+            )
+          })()}
         </div>
 
         <div className="px-6 py-4">

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
+import { resolveVideoSrc } from '@/lib/utils'
 
 const DOC_LABELS = {
   selfie:    'Selfie / Passport photo',
@@ -250,14 +251,17 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                           {l.status ?? 'draft'}
                         </span>
                       </div>
-                      {l.cloudflare_video_id && (
-                        <div style={{ aspectRatio: '16/9', backgroundColor: '#000' }}>
-                          <iframe src={`https://iframe.cloudflarestream.com/${l.cloudflare_video_id}`}
-                            className="w-full h-full"
-                            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-                            allowFullScreen title={l.title} />
-                        </div>
-                      )}
+                      {(() => {
+                        const { src } = resolveVideoSrc(l.cloudflare_video_id)
+                        if (!src) return null
+                        return (
+                          <div style={{ aspectRatio: '16/9', backgroundColor: '#000' }}>
+                            <iframe src={src} className="w-full h-full"
+                              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                              allowFullScreen title={l.title} />
+                          </div>
+                        )
+                      })()}
                     </div>
                   ))
               }
