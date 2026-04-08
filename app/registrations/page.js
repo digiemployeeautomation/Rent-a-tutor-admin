@@ -70,7 +70,7 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
     Promise.all([
       supabase.from('lessons')
         .select('id,title,subject,form_level,price,status,cloudflare_video_id,created_at')
-        .eq('tutor_id', tutor.user_id ?? tutor.id)
+        .eq('tutor_id', tutor.id)
         .order('created_at', { ascending: false }),
       supabase.from('application_notes')
         .select('*, profiles!author_id(full_name)')
@@ -384,7 +384,7 @@ export default function RegistrationsPage() {
     const tutor = tutors.find(t => t.id === id)
     await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
     if (tutor?.user_id) {
-      await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.user_id).eq('status', 'draft')
+      await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.id).eq('status', 'draft')
     }
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('admin_log').insert({ admin_id: user.id, action: 'approve_tutor', target_type: 'tutor', target_id: id })

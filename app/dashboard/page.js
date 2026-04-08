@@ -112,7 +112,7 @@ export default function DashboardPage() {
       if (tutor?.user_id) {
         await supabase.from('lessons')
           .update({ status: 'active' })
-          .eq('tutor_id', tutor.user_id)
+          .eq('tutor_id', tutor.id)
           .eq('status', 'draft')
       }
       const { data: { user } } = await supabase.auth.getUser()

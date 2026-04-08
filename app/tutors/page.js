@@ -143,7 +143,7 @@ export default function TutorsPage() {
     if (updateErr) { console.error('[revokeTutor]', updateErr); alert('Failed to revoke tutor. Please try again.'); return }
 
     if (tutor?.user_id) {
-      await supabase.from('lessons').update({ status: 'draft' }).eq('tutor_id', tutor.user_id)
+      await supabase.from('lessons').update({ status: 'draft' }).eq('tutor_id', tutor.id)
     }
 
     // FIX: log with admin_id
