@@ -115,7 +115,7 @@ export default function TutorsPage() {
     const [{ data: t }, { data: l }] = await Promise.all([
       supabase.from('tutors')
         // FIX: explicit FK hint — tutors.user_id references profiles.id
-        .select('id,user_id,is_featured,badge,subjects,hourly_rate_kwacha,avg_rating,total_reviews,created_at,profiles!user_id(full_name)')
+        .select('id,user_id,is_featured,badge,verification_status,subjects,hourly_rate_kwacha,avg_rating,total_reviews,created_at,profiles!user_id(full_name)')
         .eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('lessons')
         // FIX: explicit FK hint for nested tutor name
@@ -133,6 +133,22 @@ export default function TutorsPage() {
     const { error } = await supabase.from('tutors').update({ is_featured: !current }).eq('id', id)
     if (error) { console.error('[toggleFeatured]', error); return }
     setTutors(prev => prev.map(t => t.id === id ? { ...t, is_featured: !current } : t))
+  }
+
+  async function setBadge(id, badge) {
+    const value = badge || null
+    const { error } = await supabase.from('tutors').update({ badge: value }).eq('id', id)
+    if (error) { console.error('[setBadge]', error); alert('Failed to update badge.'); return }
+    setTutors(prev => prev.map(t => t.id === id ? { ...t, badge: value } : t))
+
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('admin_log').insert({
+      admin_id:    user.id,
+      action:      value ? 'set_badge' : 'remove_badge',
+      target_type: 'tutor',
+      target_id:   id,
+      meta:        { badge: value },
+    })
   }
 
   async function revokeTutor(id) {
@@ -290,7 +306,15 @@ export default function TutorsPage() {
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-text)' }}>{initials}</div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#111827' }}>{name}</p>
+                          <p className="text-sm font-medium" style={{ color: '#111827' }}>
+                            {name}
+                            {t.badge && (
+                              <span className="ml-2 text-xs px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-text)' }}>
+                                ✓ {t.badge}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-xs truncate" style={{ color: '#9ca3af' }}>
                             {(t.subjects ?? []).slice(0, 3).join(', ')}
                             {t.avg_rating ? ` · ★ ${t.avg_rating.toFixed(1)}` : ''}
@@ -299,6 +323,19 @@ export default function TutorsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
+                        <select
+                          value={t.badge ?? ''}
+                          onChange={e => setBadge(t.id, e.target.value)}
+                          className="text-xs rounded-lg px-2.5 py-1.5 outline-none cursor-pointer"
+                          style={{
+                            border: `1px solid ${t.badge ? 'var(--green-text)' : 'var(--border)'}`,
+                            backgroundColor: t.badge ? 'var(--green-bg)' : 'var(--surface)',
+                            color: t.badge ? 'var(--green-text)' : '#9ca3af',
+                          }}>
+                          <option value="">No badge</option>
+                          <option value="Verified">✓ Verified</option>
+                          <option value="Certified">✓ Certified</option>
+                        </select>
                         <button onClick={() => toggleFeatured(t.id, t.is_featured)}
                           className="text-xs px-3 py-1.5 rounded-lg border transition"
                           style={t.is_featured
