@@ -135,8 +135,10 @@ export default function TutorsPage() {
     setTutors(prev => prev.map(t => t.id === id ? { ...t, is_featured: !current } : t))
   }
 
+  const BADGE_LABELS = { grey: 'Verified', black: 'Certified' }
+
   async function setBadge(id, badge) {
-    const value = badge || null
+    const value = badge || 'none'
     const { error } = await supabase.from('tutors').update({ badge: value }).eq('id', id)
     if (error) { console.error('[setBadge]', error); alert('Failed to update badge.'); return }
     setTutors(prev => prev.map(t => t.id === id ? { ...t, badge: value } : t))
@@ -308,10 +310,10 @@ export default function TutorsPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium" style={{ color: '#111827' }}>
                             {name}
-                            {t.badge && (
+                            {t.badge && t.badge !== 'none' && (
                               <span className="ml-2 text-xs px-2 py-0.5 rounded-full"
                                 style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-text)' }}>
-                                ✓ {t.badge}
+                                ✓ {BADGE_LABELS[t.badge] ?? t.badge}
                               </span>
                             )}
                           </p>
@@ -324,17 +326,17 @@ export default function TutorsPage() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <select
-                          value={t.badge ?? ''}
+                          value={t.badge ?? 'none'}
                           onChange={e => setBadge(t.id, e.target.value)}
                           className="text-xs rounded-lg px-2.5 py-1.5 outline-none cursor-pointer"
                           style={{
-                            border: `1px solid ${t.badge ? 'var(--green-text)' : 'var(--border)'}`,
-                            backgroundColor: t.badge ? 'var(--green-bg)' : 'var(--surface)',
-                            color: t.badge ? 'var(--green-text)' : '#9ca3af',
+                            border: `1px solid ${t.badge && t.badge !== 'none' ? 'var(--green-text)' : 'var(--border)'}`,
+                            backgroundColor: t.badge && t.badge !== 'none' ? 'var(--green-bg)' : 'var(--surface)',
+                            color: t.badge && t.badge !== 'none' ? 'var(--green-text)' : '#9ca3af',
                           }}>
-                          <option value="">No badge</option>
-                          <option value="Verified">✓ Verified</option>
-                          <option value="Certified">✓ Certified</option>
+                          <option value="none">No badge</option>
+                          <option value="grey">✓ Verified</option>
+                          <option value="black">✓ Certified</option>
                         </select>
                         <button onClick={() => toggleFeatured(t.id, t.is_featured)}
                           className="text-xs px-3 py-1.5 rounded-lg border transition"
