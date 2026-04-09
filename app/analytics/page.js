@@ -4,7 +4,7 @@ import AdminShell from '@/components/layout/AdminShell'
 import { supabase } from '@/lib/supabase'
 
 function BarChart({ data, valueKey, labelKey, color = 'var(--primary-mid)', height = 140 }) {
-  if (!data?.length) return <p className="text-xs py-8 text-center" style={{ color: '#9ca3af' }}>No data yet.</p>
+  if (!data?.length) return <p className="text-xs py-8 text-center" style={{ color: 'var(--text-faint)' }}>No data yet.</p>
   const max = Math.max(...data.map(d => d[valueKey]), 1)
   const barH = height - 42
 
@@ -25,7 +25,7 @@ function BarChart({ data, valueKey, labelKey, color = 'var(--primary-mid)', heig
                 {d[valueKey].toLocaleString()}
               </div>
             </div>
-            <span className="text-xs truncate w-full text-center" style={{ color: '#9ca3af', fontSize: 10 }}>
+            <span className="text-xs truncate w-full text-center" style={{ color: 'var(--text-faint)', fontSize: 10 }}>
               {d[labelKey]}
             </span>
           </div>
@@ -39,7 +39,7 @@ function KpiCard({ label, value, sub, delta }) {
   const up = (delta ?? 0) >= 0
   return (
     <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
-      <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: '#9ca3af' }}>{label}</div>
+      <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-faint)' }}>{label}</div>
       <div className="font-serif text-2xl font-bold mb-1" style={{ color: 'var(--primary)' }}>{value}</div>
       <div className="flex items-center gap-2">
         {delta !== undefined && delta !== null && (
@@ -48,7 +48,7 @@ function KpiCard({ label, value, sub, delta }) {
             {up ? '↑' : '↓'} {Math.abs(delta)}% MoM
           </span>
         )}
-        {sub && <span className="text-xs" style={{ color: '#9ca3af' }}>{sub}</span>}
+        {sub && <span className="text-xs" style={{ color: 'var(--text-faint)' }}>{sub}</span>}
       </div>
     </div>
   )
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
                 className="text-xs px-3 py-1.5 rounded-lg transition"
                 style={range === r.v
                   ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' }
-                  : { color: '#6b7280' }}>
+                  : { color: 'var(--text-muted)' }}>
                 {r.l}
               </button>
             ))}
@@ -169,13 +169,13 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
             <h2 className="font-serif text-base mb-0.5" style={{ color: 'var(--primary)' }}>Revenue by month</h2>
-            <p className="text-xs mb-5" style={{ color: '#9ca3af' }}>Lesson sales + completed sessions (ZMW)</p>
+            <p className="text-xs mb-5" style={{ color: 'var(--text-faint)' }}>Lesson sales + completed sessions (ZMW)</p>
             {data ? <BarChart data={data.revenueByMonth} valueKey="value" labelKey="month" color="var(--primary-mid)" />
               : <div className="h-36 rounded animate-pulse" style={{ backgroundColor: 'var(--bg)' }} />}
           </div>
           <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
             <h2 className="font-serif text-base mb-0.5" style={{ color: 'var(--primary)' }}>New signups by month</h2>
-            <p className="text-xs mb-5" style={{ color: '#9ca3af' }}>Students and tutors registered</p>
+            <p className="text-xs mb-5" style={{ color: 'var(--text-faint)' }}>Students and tutors registered</p>
             {data ? <BarChart data={data.signupByMonth} valueKey="value" labelKey="month" color="var(--accent-mid)" />
               : <div className="h-36 rounded animate-pulse" style={{ backgroundColor: 'var(--bg)' }} />}
           </div>
@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
 
         <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
           <h2 className="font-serif text-base mb-0.5" style={{ color: 'var(--primary)' }}>Top subjects by purchases</h2>
-          <p className="text-xs mb-5" style={{ color: '#9ca3af' }}>Total lesson purchases per subject</p>
+          <p className="text-xs mb-5" style={{ color: 'var(--text-faint)' }}>Total lesson purchases per subject</p>
           {data ? (
             <BarChart data={data.topSubjects} valueKey="value" labelKey="subject" color="var(--primary-lit)" height={160} />
           ) : <div className="h-40 rounded animate-pulse" style={{ backgroundColor: 'var(--bg)' }} />}

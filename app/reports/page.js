@@ -63,38 +63,38 @@ function ReportModal({ report, onClose, onUpdate }) {
                 <span className="text-lg">{TYPE_ICONS[report.reported_type] ?? '📋'}</span>
                 <h2 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{report.reason}</h2>
               </div>
-              <p className="text-xs" style={{ color: '#9ca3af' }}>
+              <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                 {new Date(report.created_at).toLocaleDateString('en-ZM', { day: 'numeric', month: 'long', year: 'numeric' })}
                 {' · '}reported by {report.reporter?.full_name ?? 'Unknown'}
               </p>
             </div>
-            <button onClick={onClose} className="text-xl" style={{ color: '#9ca3af' }}>✕</button>
+            <button onClick={onClose} className="text-xl" style={{ color: 'var(--text-faint)' }}>✕</button>
           </div>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           <div className="flex gap-3">
             <div className="flex-1 rounded-xl p-3" style={{ backgroundColor: 'var(--bg)' }}>
-              <p className="text-xs mb-0.5" style={{ color: '#9ca3af' }}>Type</p>
+              <p className="text-xs mb-0.5" style={{ color: 'var(--text-faint)' }}>Type</p>
               <p className="text-sm capitalize">{report.reported_type}</p>
             </div>
             <div className="flex-1 rounded-xl p-3" style={{ backgroundColor: 'var(--bg)' }}>
-              <p className="text-xs mb-0.5" style={{ color: '#9ca3af' }}>Status</p>
+              <p className="text-xs mb-0.5" style={{ color: 'var(--text-faint)' }}>Status</p>
               <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
             </div>
           </div>
 
           {report.description && (
             <div>
-              <p className="text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#9ca3af' }}>Description</p>
-              <p className="text-sm leading-relaxed rounded-xl p-4" style={{ backgroundColor: 'var(--bg)', color: '#374151' }}>
+              <p className="text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Description</p>
+              <p className="text-sm leading-relaxed rounded-xl p-4" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
                 {report.description}
               </p>
             </div>
           )}
 
           <div>
-            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>
+            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
               Admin notes
             </label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
@@ -107,12 +107,12 @@ function ReportModal({ report, onClose, onUpdate }) {
         </div>
 
         <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="text-sm" style={{ color: '#6b7280' }}>Cancel</button>
+          <button onClick={onClose} className="text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>
           <div className="flex gap-2">
             {report.status !== 'dismissed' && (
               <button onClick={() => act('dismissed')} disabled={saving}
                 className="text-xs px-4 py-2 rounded-lg border disabled:opacity-50"
-                style={{ borderColor: 'var(--border)', color: '#6b7280' }}>Dismiss</button>
+                style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>Dismiss</button>
             )}
             {report.status === 'pending' && (
               <button onClick={() => act('under_review')} disabled={saving}
@@ -211,7 +211,7 @@ export default function ReportsPage() {
           <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : reports.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No {status} reports.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No {status} reports.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -227,9 +227,9 @@ export default function ReportsPage() {
                   <div className="flex items-start gap-3 min-w-0">
                     <span className="text-xl flex-shrink-0 mt-0.5">{TYPE_ICONS[r.reported_type] ?? '📋'}</span>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium" style={{ color: '#111827' }}>{r.reason}</p>
-                      {r.description && <p className="text-xs line-clamp-1 mt-0.5" style={{ color: '#6b7280' }}>{r.description}</p>}
-                      <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{r.reason}</p>
+                      {r.description && <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'var(--text-muted)' }}>{r.description}</p>}
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-faint)' }}>
                         by {r.reporter?.full_name ?? 'Unknown'} · {new Date(r.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
@@ -238,7 +238,7 @@ export default function ReportsPage() {
                     <span className="text-xs px-2.5 py-1 rounded-full capitalize" style={{ backgroundColor: sc.bg, color: sc.color }}>
                       {r.reported_type}
                     </span>
-                    <span className="text-xs" style={{ color: '#9ca3af' }}>Review →</span>
+                    <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Review →</span>
                   </div>
                 </div>
               )

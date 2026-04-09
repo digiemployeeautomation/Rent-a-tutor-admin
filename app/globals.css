@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Light theme (default) ──────────────────────────────── */
 :root {
   /* Sidebar */
   --sidebar-bg:        #0e2202;
@@ -27,6 +28,11 @@
   --accent-mid:   #ba7517;
   --accent-lit:   #fac775;
 
+  /* Text */
+  --text:         #111827;
+  --text-muted:   #6b7280;
+  --text-faint:   #9ca3af;
+
   /* Semantic */
   --green-bg:   #eaf3de;
   --green-text: #27500a;
@@ -38,6 +44,85 @@
   --blue-text:  #1d4ed8;
 }
 
+/* ── Dark theme ────────────────────────────────────────── */
+[data-dark="true"] {
+  /* Sidebar — slightly darker */
+  --sidebar-bg:        #070f03;
+  --sidebar-border:    #122a06;
+  --sidebar-text:      #a8c882;
+  --sidebar-muted:     rgba(168, 200, 130, 0.40);
+  --sidebar-active-bg: rgba(250, 199, 117, 0.14);
+  --sidebar-active:    #fac775;
+  --sidebar-hover:     rgba(168, 200, 130, 0.10);
+
+  /* Surface */
+  --bg:           #0f1610;
+  --surface:      #1a2418;
+  --border:       #2a3a24;
+  --border-light: #222e1e;
+
+  /* Brand — lighter for contrast on dark backgrounds */
+  --primary:      #c0dd97;
+  --primary-mid:  #8ab85a;
+  --primary-lit:  #6ea832;
+  --accent:       #e8a940;
+  --accent-mid:   #fac775;
+  --accent-lit:   #fde4a8;
+
+  /* Text */
+  --text:         #e5e7eb;
+  --text-muted:   #9ca3af;
+  --text-faint:   #6b7280;
+
+  /* Semantic — muted/dark-friendly versions */
+  --green-bg:   rgba(39, 80, 10, 0.25);
+  --green-text: #8ab85a;
+  --amber-bg:   rgba(133, 79, 11, 0.25);
+  --amber-text: #e8a940;
+  --red-bg:     rgba(220, 38, 38, 0.15);
+  --red-text:   #f87171;
+  --blue-bg:    rgba(29, 78, 216, 0.15);
+  --blue-text:  #60a5fa;
+}
+
+/* ── System preference fallback (when no explicit toggle) ─ */
+@media (prefers-color-scheme: dark) {
+  [data-dark="auto"] {
+    --sidebar-bg:        #070f03;
+    --sidebar-border:    #122a06;
+    --sidebar-text:      #a8c882;
+    --sidebar-muted:     rgba(168, 200, 130, 0.40);
+    --sidebar-active-bg: rgba(250, 199, 117, 0.14);
+    --sidebar-active:    #fac775;
+    --sidebar-hover:     rgba(168, 200, 130, 0.10);
+
+    --bg:           #0f1610;
+    --surface:      #1a2418;
+    --border:       #2a3a24;
+    --border-light: #222e1e;
+
+    --primary:      #c0dd97;
+    --primary-mid:  #8ab85a;
+    --primary-lit:  #6ea832;
+    --accent:       #e8a940;
+    --accent-mid:   #fac775;
+    --accent-lit:   #fde4a8;
+
+    --text:         #e5e7eb;
+    --text-muted:   #9ca3af;
+    --text-faint:   #6b7280;
+
+    --green-bg:   rgba(39, 80, 10, 0.25);
+    --green-text: #8ab85a;
+    --amber-bg:   rgba(133, 79, 11, 0.25);
+    --amber-text: #e8a940;
+    --red-bg:     rgba(220, 38, 38, 0.15);
+    --red-text:   #f87171;
+    --blue-bg:    rgba(29, 78, 216, 0.15);
+    --blue-text:  #60a5fa;
+  }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { font-size: 14px; }
@@ -45,7 +130,7 @@ html { font-size: 14px; }
 body {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   background-color: var(--bg);
-  color: #111827;
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -54,7 +139,12 @@ h1, h2, h3, h4 { font-family: Georgia, 'Times New Roman', serif; }
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* Dark-friendly hover — overrides Tailwind's hardcoded hover:bg-gray-50 */
+[data-dark="true"] .hover\:bg-gray-50:hover {
+  background-color: var(--border-light) !important;
+}
 
 /* Utility: line-clamp */
 .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }

@@ -94,9 +94,10 @@ export async function POST(request) {
     } catch (fetchError) {
       clearTimeout(timeoutId)
       // Network error or timeout — revert to pending so it can be retried
-      await supabase.from('payout_requests').update({
+      const { error: revertErr } = await supabase.from('payout_requests').update({
         status: 'pending', processed_by: null,
       }).eq('id', payoutRequestId).eq('status', 'processing')
+      if (revertErr) console.error('[admin/payout] failed to revert status:', revertErr)
 
       const isTimeout = fetchError.name === 'AbortError'
       console.error('[admin/payout] MoneyUnify fetch failed:', fetchError.message)
@@ -110,7 +111,7 @@ export async function POST(request) {
     // Validate HTTP response before parsing JSON
     if (!muRes.ok) {
       const errorText = await muRes.text().catch(() => '')
-      console.error('[admin/payout] MoneyUnify HTTP error:', muRes.status, errorText.slice(0, 200))
+      console.error('[admin/payout] MoneyUnify HTTP error:', muRes.status, errorText.slice(0, 100))
 
       await supabase.from('payout_requests').update({
         status:      'failed',

@@ -166,8 +166,8 @@ export default function TopicRequestForm({ onSubmitted, className = '' }) {
               <button key={f} type="button" onClick={() => setFormLevel(f)}
                 className="text-xs px-3 py-1.5 rounded-full border transition"
                 style={formLevel === f
-                  ? { backgroundColor: 'var(--color-primary)', color: 'white', borderColor: 'var(--color-primary)' }
-                  : { borderColor: '#e5e7eb', color: '#6b7280' }}>
+                  ? { backgroundColor: 'var(--color-primary)', color: 'var(--surface)', borderColor: 'var(--color-primary)' }
+                  : { borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 {f}
               </button>
             ))}
@@ -196,7 +196,7 @@ export default function TopicRequestForm({ onSubmitted, className = '' }) {
                 className="flex flex-col items-center gap-1 px-3 py-3 rounded-xl border text-center transition"
                 style={urgency === u.value
                   ? { backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-primary-lit)', color: 'var(--color-primary)' }
-                  : { borderColor: '#e5e7eb', color: '#6b7280' }}>
+                  : { borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 <span className="text-lg">{u.icon}</span>
                 <span className="text-xs font-medium">{u.label}</span>
                 <span className="text-xs opacity-70">{u.desc}</span>

@@ -29,9 +29,9 @@ function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
         <div className="px-6 py-4 flex justify-between items-start" style={{ borderBottom: '1px solid var(--border)' }}>
           <div>
             <h2 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{lesson.title}</h2>
-            <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>{lesson.subject} · {lesson.form_level} · K{lesson.price}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-faint)' }}>{lesson.subject} · {lesson.form_level} · K{lesson.price}</p>
           </div>
-          <button onClick={onClose} className="text-xl" style={{ color: '#9ca3af' }}>✕</button>
+          <button onClick={onClose} className="text-xl" style={{ color: 'var(--text-faint)' }}>✕</button>
         </div>
 
         <div style={{ aspectRatio: '16/9', backgroundColor: '#0a0a0a' }}>
@@ -43,7 +43,7 @@ function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
                 allowFullScreen title={lesson.title} />
             )
             return (
-              <div className="w-full h-full flex items-center justify-center text-sm" style={{ color: '#6b7280' }}>
+              <div className="w-full h-full flex items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>
                 No video uploaded yet
               </div>
             )
@@ -59,7 +59,7 @@ function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
               </div>
               <button onClick={handleUnflag}
                 className="text-xs px-4 py-2 rounded-lg border flex-shrink-0"
-                style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+                style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 Remove flag
               </button>
             </div>
@@ -72,19 +72,19 @@ function VideoModal({ lesson, onClose, onFlag, onUnflag }) {
               <div className="flex gap-2">
                 <button onClick={handleFlag}
                   className="text-xs px-4 py-2 rounded-lg font-medium"
-                  style={{ backgroundColor: 'var(--red-text)', color: 'white' }}>
+                  style={{ backgroundColor: 'var(--red-text)', color: 'var(--surface)' }}>
                   Confirm — flag & hide lesson
                 </button>
                 <button onClick={() => setConfirm(false)}
                   className="text-xs px-4 py-2 rounded-lg border"
-                  style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <p className="text-xs" style={{ color: '#9ca3af' }}>
+              <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                 Flagged lessons are hidden from students until resolved.
               </p>
               <button onClick={handleFlag}
@@ -250,7 +250,7 @@ export default function TutorsPage() {
             { label: 'Flagged lessons', value: lessons.filter(l => l.flagged).length },
           ].map(s => (
             <div key={s.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: '#9ca3af' }}>{s.label}</p>
+              <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'var(--text-faint)' }}>{s.label}</p>
               <p className="font-serif text-2xl font-bold" style={{ color: 'var(--primary)' }}>{s.value}</p>
             </div>
           ))}
@@ -262,7 +262,7 @@ export default function TutorsPage() {
               {[{ key: 'tutors', label: `Tutors (${tutors.length})` }, { key: 'lessons', label: `Lessons (${lessons.length})` }].map(t => (
                 <button key={t.key} onClick={() => setTab(t.key)}
                   className="text-xs px-4 py-1.5 rounded-lg transition font-medium"
-                  style={tab === t.key ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: '#6b7280' }}>
+                  style={tab === t.key ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: 'var(--text-muted)' }}>
                   {t.label}
                 </button>
               ))}
@@ -297,7 +297,7 @@ export default function TutorsPage() {
         ) : tab === 'tutors' ? (
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
             {filteredTutors.length === 0
-              ? <p className="text-sm text-center py-16" style={{ color: '#9ca3af' }}>No tutors found.</p>
+              ? <p className="text-sm text-center py-16" style={{ color: 'var(--text-faint)' }}>No tutors found.</p>
               : filteredTutors.map((t, i) => {
                   const name = t.profiles?.full_name ?? 'Tutor'
                   const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -308,7 +308,7 @@ export default function TutorsPage() {
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ backgroundColor: 'var(--green-bg)', color: 'var(--green-text)' }}>{initials}</div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#111827' }}>
+                          <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>
                             {name}
                             {t.badge && t.badge !== 'none' && (
                               <span className="ml-2 text-xs px-2 py-0.5 rounded-full"
@@ -317,7 +317,7 @@ export default function TutorsPage() {
                               </span>
                             )}
                           </p>
-                          <p className="text-xs truncate" style={{ color: '#9ca3af' }}>
+                          <p className="text-xs truncate" style={{ color: 'var(--text-faint)' }}>
                             {(t.subjects ?? []).slice(0, 3).join(', ')}
                             {t.avg_rating ? ` · ★ ${t.avg_rating.toFixed(1)}` : ''}
                             {t.hourly_rate_kwacha ? ` · K${t.hourly_rate_kwacha}/hr` : ''}
@@ -332,7 +332,7 @@ export default function TutorsPage() {
                           style={{
                             border: `1px solid ${t.badge && t.badge !== 'none' ? 'var(--green-text)' : 'var(--border)'}`,
                             backgroundColor: t.badge && t.badge !== 'none' ? 'var(--green-bg)' : 'var(--surface)',
-                            color: t.badge && t.badge !== 'none' ? 'var(--green-text)' : '#9ca3af',
+                            color: t.badge && t.badge !== 'none' ? 'var(--green-text)' : 'var(--text-faint)',
                           }}>
                           <option value="none">No badge</option>
                           <option value="grey">✓ Verified</option>
@@ -342,7 +342,7 @@ export default function TutorsPage() {
                           className="text-xs px-3 py-1.5 rounded-lg border transition"
                           style={t.is_featured
                             ? { backgroundColor: 'var(--amber-bg)', borderColor: 'var(--amber-text)', color: 'var(--amber-text)' }
-                            : { borderColor: 'var(--border)', color: '#9ca3af' }}>
+                            : { borderColor: 'var(--border)', color: 'var(--text-faint)' }}>
                           {t.is_featured ? '★ Featured' : 'Feature'}
                         </button>
                         <button onClick={() => revokeTutor(t.id)}
@@ -362,21 +362,21 @@ export default function TutorsPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Lesson', 'Tutor', 'Subject', 'Purchases', 'Status', ''].map(h =>
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>)}
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {filteredLessons.length === 0
-                  ? <tr><td colSpan={6} className="px-4 py-16 text-center text-sm" style={{ color: '#9ca3af' }}>No lessons found.</td></tr>
+                  ? <tr><td colSpan={6} className="px-4 py-16 text-center text-sm" style={{ color: 'var(--text-faint)' }}>No lessons found.</td></tr>
                   : filteredLessons.map(l => (
                       <tr key={l.id} className="hover:bg-gray-50 transition" style={{ borderBottom: '1px solid var(--border-light)' }}>
                         <td className="px-4 py-3 max-w-xs">
-                          <p className="font-medium truncate" style={{ color: '#111827' }}>{l.title}</p>
+                          <p className="font-medium truncate" style={{ color: 'var(--text)' }}>{l.title}</p>
                           {l.flagged && <p className="text-xs" style={{ color: 'var(--red-text)' }}>⚑ {l.flag_reason || 'Flagged'}</p>}
-                          {!l.cloudflare_video_id && <p className="text-xs" style={{ color: '#9ca3af' }}>No video</p>}
+                          {!l.cloudflare_video_id && <p className="text-xs" style={{ color: 'var(--text-faint)' }}>No video</p>}
                         </td>
-                        <td className="px-4 py-3" style={{ color: '#6b7280' }}>{l.tutors?.profiles?.full_name ?? '—'}</td>
-                        <td className="px-4 py-3" style={{ color: '#6b7280' }}>{l.subject}</td>
+                        <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>{l.tutors?.profiles?.full_name ?? '—'}</td>
+                        <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>{l.subject}</td>
                         <td className="px-4 py-3 font-semibold" style={{ color: 'var(--primary)' }}>{l.purchase_count ?? 0}</td>
                         <td className="px-4 py-3">
                           <span className="px-2.5 py-1 rounded-full capitalize text-xs"
@@ -390,7 +390,7 @@ export default function TutorsPage() {
                         <td className="px-4 py-3">
                           <button onClick={() => setVideoLesson(l)}
                             className="text-xs px-3 py-1.5 rounded-lg border"
-                            style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+                            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                             {l.cloudflare_video_id ? '▶ Review' : 'Details'}
                           </button>
                         </td>

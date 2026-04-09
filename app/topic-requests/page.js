@@ -65,12 +65,12 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
                 </span>
               </div>
               <h2 className="font-serif text-xl" style={{ color: 'var(--primary)' }}>{request.topic}</h2>
-              <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-faint)' }}>
                 by {request.student_name ?? 'Student'} · {request.form_level ?? 'Any level'} ·{' '}
                 {new Date(request.created_at).toLocaleDateString('en-ZM', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
-            <button onClick={onClose} className="text-xl flex-shrink-0" style={{ color: '#9ca3af' }}>✕</button>
+            <button onClick={onClose} className="text-xl flex-shrink-0" style={{ color: 'var(--text-faint)' }}>✕</button>
           </div>
         </div>
 
@@ -78,14 +78,14 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {request.description && (
             <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg)' }}>
-              <p className="text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: '#9ca3af' }}>Student description</p>
-              <p className="text-sm" style={{ color: '#374151' }}>{request.description}</p>
+              <p className="text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Student description</p>
+              <p className="text-sm" style={{ color: 'var(--text)' }}>{request.description}</p>
             </div>
           )}
 
           {/* Tutor responses */}
           <div>
-            <p className="text-xs font-medium mb-3 uppercase tracking-wide" style={{ color: '#9ca3af' }}>
+            <p className="text-xs font-medium mb-3 uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
               Tutor responses ({responses.length})
             </p>
             {loadingResp ? (
@@ -93,7 +93,7 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
                 {[1,2].map(i => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--bg)' }} />)}
               </div>
             ) : responses.length === 0 ? (
-              <p className="text-xs" style={{ color: '#9ca3af' }}>No tutor has responded yet.</p>
+              <p className="text-xs" style={{ color: 'var(--text-faint)' }}>No tutor has responded yet.</p>
             ) : responses.map(r => (
               <div key={r.id} className="rounded-xl p-4 mb-2"
                 style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)' }}>
@@ -107,19 +107,19 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
                         K{r.proposed_rate}/hr
                       </span>
                     )}
-                    <span className="text-xs" style={{ color: '#9ca3af' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
                       {new Date(r.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
                 </div>
-                <p className="text-xs" style={{ color: '#4b5563' }}>{r.message}</p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{r.message}</p>
               </div>
             ))}
           </div>
 
           {/* Admin notes */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>
+            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
               Admin notes (internal)
             </label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
@@ -133,12 +133,12 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
         {/* Actions */}
         <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
           style={{ borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="text-sm" style={{ color: '#6b7280' }}>Close</button>
+          <button onClick={onClose} className="text-sm" style={{ color: 'var(--text-muted)' }}>Close</button>
           <div className="flex gap-2">
             {request.status !== 'covered' && (
               <button onClick={() => updateStatus('covered')} disabled={saving}
                 className="text-xs px-4 py-2 rounded-lg border font-medium disabled:opacity-50"
-                style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+                style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 Mark covered
               </button>
             )}
@@ -273,7 +273,7 @@ export default function TopicRequestsPage() {
           </div>
         ) : requests.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No {status} topic requests.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No {status} topic requests.</p>
           </div>
         ) : (
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -281,7 +281,7 @@ export default function TopicRequestsPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Topic', 'Subject', 'Student', 'Level', 'Urgency', 'Responses', 'Date', ''].map(h => (
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -292,26 +292,26 @@ export default function TopicRequestsPage() {
                     <tr key={r.id} className="hover:bg-gray-50 cursor-pointer transition"
                       style={{ borderBottom: '1px solid var(--border-light)' }}
                       onClick={() => setSelected(r)}>
-                      <td className="px-4 py-3 font-medium max-w-xs" style={{ color: '#111827' }}>
+                      <td className="px-4 py-3 font-medium max-w-xs" style={{ color: 'var(--text)' }}>
                         <span className="line-clamp-1">{r.topic}</span>
                       </td>
-                      <td className="px-4 py-3" style={{ color: '#6b7280' }}>{r.subject}</td>
-                      <td className="px-4 py-3" style={{ color: '#6b7280' }}>{r.student_name ?? '—'}</td>
-                      <td className="px-4 py-3" style={{ color: '#9ca3af' }}>{r.form_level ?? '—'}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>{r.subject}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>{r.student_name ?? '—'}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>{r.form_level ?? '—'}</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-0.5 rounded-full" style={{ backgroundColor: urg.bg, color: urg.color }}>
                           {urg.label}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-semibold" style={{ color: r.response_count > 0 ? 'var(--primary)' : '#9ca3af' }}>
+                        <span className="font-semibold" style={{ color: r.response_count > 0 ? 'var(--primary)' : 'var(--text-faint)' }}>
                           {r.response_count}
                         </span>
                       </td>
-                      <td className="px-4 py-3" style={{ color: '#9ca3af' }}>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>
                         {new Date(r.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric' })}
                       </td>
-                      <td className="px-4 py-3" style={{ color: '#9ca3af' }}>View →</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>View →</td>
                     </tr>
                   )
                 })}

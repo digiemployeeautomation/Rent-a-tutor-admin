@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import { supabase } from '@/lib/supabase'
+import { useTheme } from '@/context/ThemeContext'
 
 const PAGE_TITLES = {
   '/dashboard':      'Dashboard',
@@ -22,6 +23,7 @@ const PAGE_TITLES = {
 export default function AdminShell({ children }) {
   const router   = useRouter()
   const pathname = usePathname()
+  const { darkMode, toggleDark } = useTheme()
   const [admin, setAdmin]   = useState(null)
   const [badges, setBadges] = useState({})
   const [ready, setReady]   = useState(false)
@@ -87,9 +89,14 @@ export default function AdminShell({ children }) {
           style={{ backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
           <h1 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{title}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-xs" style={{ color: '#9ca3af' }}>
+            <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
               {new Date().toLocaleDateString('en-ZM', { weekday: 'short', month: 'short', day: 'numeric' })}
             </span>
+            <button onClick={toggleDark} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:opacity-80"
+              style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 14 }}>{darkMode ? '☀' : '🌙'}</span>
+            </button>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium"
                 style={{ backgroundColor: 'var(--green-bg)', color: 'var(--primary-mid)' }}>

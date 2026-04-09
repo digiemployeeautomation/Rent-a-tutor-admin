@@ -44,10 +44,10 @@ function UserDetailModal({ user: u, onClose }) {
               </div>
               <div>
                 <p className="font-serif text-lg" style={{ color: 'var(--primary)' }}>{u.full_name ?? '—'}</p>
-                <p className="text-xs" style={{ color: '#9ca3af' }}>Joined {fmt(u.created_at)}</p>
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>Joined {fmt(u.created_at)}</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-xl" style={{ color: '#9ca3af' }}>✕</button>
+            <button onClick={onClose} className="text-xl" style={{ color: 'var(--text-faint)' }}>✕</button>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ function UserDetailModal({ user: u, onClose }) {
               { label: 'Sessions',    value: activity?.bookings?.length ?? '—' },
             ]).map(s => (
               <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--bg)' }}>
-                <p className="text-xs mb-0.5" style={{ color: '#9ca3af' }}>{s.label}</p>
+                <p className="text-xs mb-0.5" style={{ color: 'var(--text-faint)' }}>{s.label}</p>
                 <p className="font-serif text-xl font-bold" style={{ color: 'var(--primary)' }}>{s.value}</p>
               </div>
             ))}
@@ -73,13 +73,13 @@ function UserDetailModal({ user: u, onClose }) {
           {/* Activity list */}
           {u.role === 'student' && activity?.purchases?.length > 0 && (
             <div>
-              <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: '#9ca3af' }}>Recent purchases</p>
+              <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Recent purchases</p>
               <div className="space-y-1">
                 {activity.purchases.slice(0, 5).map(p => (
                   <div key={p.id} className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
                     <div>
-                      <p className="text-xs font-medium" style={{ color: '#111827' }}>{p.lessons?.title ?? '—'}</p>
-                      <p className="text-xs" style={{ color: '#9ca3af' }}>{p.lessons?.subject} · {fmt(p.purchased_at)}</p>
+                      <p className="text-xs font-medium" style={{ color: 'var(--text)' }}>{p.lessons?.title ?? '—'}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{p.lessons?.subject} · {fmt(p.purchased_at)}</p>
                     </div>
                     <p className="text-xs font-semibold" style={{ color: 'var(--primary-lit)' }}>K{p.amount_paid}</p>
                   </div>
@@ -90,13 +90,13 @@ function UserDetailModal({ user: u, onClose }) {
 
           {u.role === 'tutor' && activity?.lessons?.length > 0 && (
             <div>
-              <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: '#9ca3af' }}>Lessons</p>
+              <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Lessons</p>
               <div className="space-y-1">
                 {activity.lessons.slice(0, 5).map(l => (
                   <div key={l.id} className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
                     <div>
-                      <p className="text-xs font-medium" style={{ color: '#111827' }}>{l.title}</p>
-                      <p className="text-xs" style={{ color: '#9ca3af' }}>{l.subject} · {l.purchase_count ?? 0} purchases</p>
+                      <p className="text-xs font-medium" style={{ color: 'var(--text)' }}>{l.title}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{l.subject} · {l.purchase_count ?? 0} purchases</p>
                     </div>
                     <span className="text-xs px-2 py-0.5 rounded-full capitalize"
                       style={{ backgroundColor: l.status === 'active' ? 'var(--green-bg)' : 'var(--amber-bg)', color: l.status === 'active' ? 'var(--green-text)' : 'var(--amber-text)' }}>
@@ -165,7 +165,7 @@ export default function UsersPage() {
             ].map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
                 className="text-xs px-5 py-1.5 rounded-lg transition font-medium"
-                style={tab === t.key ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: '#6b7280' }}>
+                style={tab === t.key ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: 'var(--text-muted)' }}>
                 {t.label}
               </button>
             ))}
@@ -181,7 +181,7 @@ export default function UsersPage() {
           <div className="space-y-2">{[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : users.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No {tab} found.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No {tab} found.</p>
           </div>
         ) : (
           <>
@@ -190,7 +190,7 @@ export default function UsersPage() {
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
                     {['Name', 'Role', 'Joined', 'Referral credit', ''].map(h =>
-                      <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>)}
+                      <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -203,18 +203,18 @@ export default function UsersPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={{ backgroundColor: tab === 'tutors' ? '#eff6ff' : 'var(--green-bg)', color: tab === 'tutors' ? '#1d4ed8' : 'var(--green-text)' }}>
+                              style={{ backgroundColor: tab === 'tutors' ? 'var(--blue-bg)' : 'var(--green-bg)', color: tab === 'tutors' ? 'var(--blue-text)' : 'var(--green-text)' }}>
                               {initials}
                             </div>
-                            <span className="font-medium" style={{ color: '#111827' }}>{u.full_name ?? '—'}</span>
+                            <span className="font-medium" style={{ color: 'var(--text)' }}>{u.full_name ?? '—'}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 capitalize" style={{ color: '#6b7280' }}>{u.role}</td>
-                        <td className="px-4 py-3" style={{ color: '#9ca3af' }}>{fmt(u.created_at)}</td>
-                        <td className="px-4 py-3" style={{ color: (u.referral_credit ?? 0) > 0 ? 'var(--green-text)' : '#9ca3af' }}>
+                        <td className="px-4 py-3 capitalize" style={{ color: 'var(--text-muted)' }}>{u.role}</td>
+                        <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>{fmt(u.created_at)}</td>
+                        <td className="px-4 py-3" style={{ color: (u.referral_credit ?? 0) > 0 ? 'var(--green-text)' : 'var(--text-faint)' }}>
                           {(u.referral_credit ?? 0) > 0 ? `K${u.referral_credit}` : '—'}
                         </td>
-                        <td className="px-4 py-3" style={{ color: '#9ca3af' }}>View →</td>
+                        <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>View →</td>
                       </tr>
                     )
                   })}
@@ -226,11 +226,11 @@ export default function UsersPage() {
             <div className="flex items-center justify-center gap-3">
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
                 className="text-xs px-4 py-2 rounded-lg border disabled:opacity-40"
-                style={{ borderColor: 'var(--border)', color: '#6b7280' }}>← Prev</button>
-              <span className="text-xs" style={{ color: '#9ca3af' }}>Page {page + 1}</span>
+                style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>← Prev</button>
+              <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Page {page + 1}</span>
               <button onClick={() => setPage(p => p + 1)} disabled={users.length < PAGE}
                 className="text-xs px-4 py-2 rounded-lg border disabled:opacity-40"
-                style={{ borderColor: 'var(--border)', color: '#6b7280' }}>Next →</button>
+                style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>Next →</button>
             </div>
           </>
         )}

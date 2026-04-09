@@ -45,14 +45,14 @@ function ComposeModal({ onClose, onCreated }) {
         style={{ backgroundColor: 'var(--surface)' }}>
         <div className="px-6 py-5 flex justify-between items-center" style={{ borderBottom: '1px solid var(--border)' }}>
           <h2 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>New announcement</h2>
-          <button onClick={onClose} className="text-xl" style={{ color: '#9ca3af' }}>✕</button>
+          <button onClick={onClose} className="text-xl" style={{ color: 'var(--text-faint)' }}>✕</button>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           {/* Audience + Type */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Send to</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Send to</label>
               <select value={audience} onChange={e => setAudience(e.target.value)}
                 className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
                 style={{ border: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}>
@@ -62,7 +62,7 @@ function ComposeModal({ onClose, onCreated }) {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Type</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Type</label>
               <div className="flex gap-1.5">
                 {Object.entries(TYPE_STYLES).map(([k, v]) => (
                   <button key={k} onClick={() => setType(k)} title={v.label}
@@ -77,7 +77,7 @@ function ComposeModal({ onClose, onCreated }) {
 
           {/* Title */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Title</label>
+            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Title</label>
             <input value={title} onChange={e => setTitle(e.target.value)}
               placeholder="e.g. Platform maintenance this Saturday"
               className="w-full text-sm rounded-lg px-4 py-2.5 outline-none"
@@ -86,7 +86,7 @@ function ComposeModal({ onClose, onCreated }) {
 
           {/* Body */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Message</label>
+            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Message</label>
             <textarea value={body} onChange={e => setBody(e.target.value)} rows={4}
               placeholder="Write your announcement…"
               className="w-full text-sm rounded-lg px-4 py-2.5 outline-none resize-none"
@@ -98,12 +98,12 @@ function ComposeModal({ onClose, onCreated }) {
             <div className="relative">
               <input type="checkbox" checked={publish} onChange={e => setPublish(e.target.checked)} className="sr-only" />
               <div className="w-10 h-5 rounded-full transition"
-                style={{ backgroundColor: publish ? 'var(--primary-mid)' : '#d1d5db' }}>
+                style={{ backgroundColor: publish ? 'var(--primary-mid)' : 'var(--border)' }}>
                 <div className="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all"
                   style={{ left: publish ? '1.25rem' : '0.125rem' }} />
               </div>
             </div>
-            <span className="text-sm" style={{ color: '#374151' }}>
+            <span className="text-sm" style={{ color: 'var(--text)' }}>
               {publish ? 'Publish immediately' : 'Save as draft'}
             </span>
           </label>
@@ -112,7 +112,7 @@ function ComposeModal({ onClose, onCreated }) {
         </div>
 
         <div className="px-6 py-4 flex justify-between" style={{ borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="text-sm" style={{ color: '#6b7280' }}>Cancel</button>
+          <button onClick={onClose} className="text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>
           <button onClick={handleSave} disabled={saving}
             className="text-sm px-5 py-2 rounded-lg font-medium disabled:opacity-50"
             style={{ backgroundColor: 'var(--primary-mid)', color: 'var(--sidebar-text)' }}>
@@ -167,7 +167,7 @@ export default function AnnouncementsPage() {
           <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : announcements.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No announcements yet.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No announcements yet.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -187,14 +187,14 @@ export default function AnnouncementsPage() {
                   <div className="px-5 py-4 flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-semibold" style={{ color: '#111827' }}>{a.title}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{a.title}</p>
                         {!a.published && (
                           <span className="text-xs px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: '#f3f4f6', color: '#9ca3af' }}>Draft</span>
+                            style={{ backgroundColor: 'var(--border-light)', color: 'var(--text-faint)' }}>Draft</span>
                         )}
                       </div>
-                      <p className="text-xs leading-relaxed line-clamp-2" style={{ color: '#6b7280' }}>{a.body}</p>
-                      <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>
+                      <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--text-muted)' }}>{a.body}</p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
                         {a.sent_at
                           ? `Sent ${new Date(a.sent_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' })}`
                           : `Created ${new Date(a.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric' })}`}
@@ -204,7 +204,7 @@ export default function AnnouncementsPage() {
                       <button onClick={() => togglePublished(a.id, a.published)}
                         className="text-xs px-3 py-1.5 rounded-lg border transition"
                         style={a.published
-                          ? { borderColor: 'var(--border)', color: '#9ca3af' }
+                          ? { borderColor: 'var(--border)', color: 'var(--text-faint)' }
                           : { borderColor: 'var(--green-text)', color: 'var(--green-text)' }}>
                         {a.published ? 'Unpublish' : 'Publish'}
                       </button>

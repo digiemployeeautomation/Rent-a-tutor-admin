@@ -11,7 +11,7 @@ function PayoutModal({ request, onClose, onProcessed }) {
   const processing = useRef(false)
 
   async function processPayout() {
-    if (processing.current) return
+    if (processing.current || loading) return
     processing.current = true
     setLoading(true)
     const res = await fetch('/api/admin/payout', {
@@ -33,7 +33,7 @@ function PayoutModal({ request, onClose, onProcessed }) {
         style={{ backgroundColor: 'var(--surface)' }}>
         <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
           <h2 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>Process payout</h2>
-          <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>via MoneyUnify mobile money</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>via MoneyUnify mobile money</p>
         </div>
         <div className="px-6 py-5 space-y-3">
           {[
@@ -44,8 +44,8 @@ function PayoutModal({ request, onClose, onProcessed }) {
           ].map(f => (
             <div key={f.label} className="flex justify-between py-1.5"
               style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <span className="text-xs" style={{ color: '#9ca3af' }}>{f.label}</span>
-              <span className="text-xs font-medium" style={{ color: '#111827' }}>{f.value}</span>
+              <span className="text-xs" style={{ color: 'var(--text-faint)' }}>{f.label}</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--text)' }}>{f.value}</span>
             </div>
           ))}
 
@@ -61,7 +61,7 @@ function PayoutModal({ request, onClose, onProcessed }) {
           )}
         </div>
         <div className="px-6 py-4 flex justify-between" style={{ borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="text-sm" style={{ color: '#6b7280' }}>
+          <button onClick={onClose} className="text-sm" style={{ color: 'var(--text-muted)' }}>
             {result ? 'Close' : 'Cancel'}
           </button>
           {!result && (
@@ -135,7 +135,7 @@ export default function PaymentsPage() {
               className="text-xs px-4 py-1.5 rounded-lg transition font-medium"
               style={tab === t.key
                 ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' }
-                : { color: '#6b7280' }}>
+                : { color: 'var(--text-muted)' }}>
               {t.label}
             </button>
           ))}
@@ -152,19 +152,19 @@ export default function PaymentsPage() {
               <table className="w-full text-xs">
                 <thead><tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Lesson', 'Student', 'Date', 'Amount', 'TX ID'].map(h =>
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>)}
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {purchases.map(p => (
                     <tr key={p.id} className="hover:bg-gray-50" style={{ borderBottom: '1px solid var(--border-light)' }}>
                       <td className="px-4 py-3">
-                        <div className="font-medium truncate max-w-xs" style={{ color: '#111827' }}>{p.lessons?.title ?? '—'}</div>
-                        <div style={{ color: '#9ca3af' }}>{p.lessons?.subject}</div>
+                        <div className="font-medium truncate max-w-xs" style={{ color: 'var(--text)' }}>{p.lessons?.title ?? '—'}</div>
+                        <div style={{ color: 'var(--text-faint)' }}>{p.lessons?.subject}</div>
                       </td>
-                      <td className="px-4 py-3" style={{ color: '#6b7280' }}>{p.profiles?.full_name ?? '—'}</td>
-                      <td className="px-4 py-3" style={{ color: '#9ca3af' }}>{fmt(p.purchased_at)}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>{p.profiles?.full_name ?? '—'}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>{fmt(p.purchased_at)}</td>
                       <td className="px-4 py-3 font-semibold" style={{ color: 'var(--primary-lit)' }}>K{p.amount_paid}</td>
-                      <td className="px-4 py-3 font-mono" style={{ color: '#9ca3af', fontSize: 10 }}>
+                      <td className="px-4 py-3 font-mono" style={{ color: 'var(--text-faint)', fontSize: 10 }}>
                         {p.transaction_id?.slice(0, 12) ?? '—'}
                       </td>
                     </tr>
@@ -177,14 +177,14 @@ export default function PaymentsPage() {
               <table className="w-full text-xs">
                 <thead><tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Subject', 'Student', 'Date', 'Status', 'Amount'].map(h =>
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>)}
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {bookings.map(b => (
                     <tr key={b.id} className="hover:bg-gray-50" style={{ borderBottom: '1px solid var(--border-light)' }}>
-                      <td className="px-4 py-3 font-medium" style={{ color: '#111827' }}>{b.subject}</td>
-                      <td className="px-4 py-3" style={{ color: '#6b7280' }}>{b.profiles?.full_name ?? '—'}</td>
-                      <td className="px-4 py-3" style={{ color: '#9ca3af' }}>{fmt(b.scheduled_at)}</td>
+                      <td className="px-4 py-3 font-medium" style={{ color: 'var(--text)' }}>{b.subject}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>{b.profiles?.full_name ?? '—'}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>{fmt(b.scheduled_at)}</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-1 rounded-full capitalize"
                           style={{ backgroundColor: b.status === 'completed' ? 'var(--green-bg)' : 'var(--amber-bg)', color: b.status === 'completed' ? 'var(--green-text)' : 'var(--amber-text)' }}>
@@ -202,17 +202,17 @@ export default function PaymentsPage() {
               <table className="w-full text-xs">
                 <thead><tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Tutor', 'Phone', 'Amount', 'Requested', 'Status', ''].map(h =>
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>)}
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {payouts.map(p => {
                     const sc = PAYOUT_STATUS[p.status] ?? PAYOUT_STATUS.pending
                     return (
                       <tr key={p.id} className="hover:bg-gray-50" style={{ borderBottom: '1px solid var(--border-light)' }}>
-                        <td className="px-4 py-3 font-medium" style={{ color: '#111827' }}>{p.tutors?.profiles?.full_name ?? '—'}</td>
-                        <td className="px-4 py-3 font-mono" style={{ color: '#6b7280' }}>{p.phone}</td>
+                        <td className="px-4 py-3 font-medium" style={{ color: 'var(--text)' }}>{p.tutors?.profiles?.full_name ?? '—'}</td>
+                        <td className="px-4 py-3 font-mono" style={{ color: 'var(--text-muted)' }}>{p.phone}</td>
                         <td className="px-4 py-3 font-semibold" style={{ color: 'var(--primary-lit)' }}>K{p.amount.toLocaleString()}</td>
-                        <td className="px-4 py-3" style={{ color: '#9ca3af' }}>{fmt(p.requested_at)}</td>
+                        <td className="px-4 py-3" style={{ color: 'var(--text-faint)' }}>{fmt(p.requested_at)}</td>
                         <td className="px-4 py-3">
                           <span className="px-2 py-1 rounded-full capitalize"
                             style={{ backgroundColor: sc.bg, color: sc.color }}>{p.status}</span>

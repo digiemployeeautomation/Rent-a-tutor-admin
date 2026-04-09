@@ -39,7 +39,7 @@ function ViewDocButton({ storagePath }) {
     <div className="flex flex-col items-end gap-1">
       <button onClick={handleView} disabled={loading}
         className="text-xs px-3 py-1.5 rounded-lg border disabled:opacity-50"
-        style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+        style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
         {loading ? '…' : 'View →'}
       </button>
       {error && <p className="text-xs" style={{ color: 'var(--red-text)' }}>{error}</p>}
@@ -120,18 +120,18 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
               </div>
               <div>
                 <h2 className="font-serif text-xl" style={{ color: 'var(--primary)' }}>{name}</h2>
-                <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-faint)' }}>
                   Applied {new Date(tutor.created_at).toLocaleDateString('en-ZM', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {(tutor.subjects ?? []).map(s => (
                     <span key={s} className="text-xs px-2 py-0.5 rounded-full border"
-                      style={{ borderColor: 'var(--border)', color: '#6b7280' }}>{s}</span>
+                      style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>{s}</span>
                   ))}
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="text-xl flex-shrink-0" style={{ color: '#9ca3af' }}>✕</button>
+            <button onClick={onClose} className="text-xl flex-shrink-0" style={{ color: 'var(--text-faint)' }}>✕</button>
           </div>
         </div>
 
@@ -141,7 +141,7 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
               className="text-xs px-4 py-3 font-medium transition border-b-2"
               style={tab === t.key
                 ? { color: 'var(--primary)', borderColor: 'var(--primary)' }
-                : { color: '#9ca3af', borderColor: 'transparent' }}>
+                : { color: 'var(--text-faint)', borderColor: 'transparent' }}>
               {t.label}
             </button>
           ))}
@@ -168,15 +168,15 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                   { label: 'National ID',   value: tutor.national_id_number || '—' },
                 ].map(f => (
                   <div key={f.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg)' }}>
-                    <p className="text-xs mb-0.5" style={{ color: '#9ca3af' }}>{f.label}</p>
-                    <p className="text-sm font-medium" style={{ color: '#111827' }}>{f.value}</p>
+                    <p className="text-xs mb-0.5" style={{ color: 'var(--text-faint)' }}>{f.label}</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{f.value}</p>
                   </div>
                 ))}
               </div>
               {tutor.bio && (
                 <div className="rounded-xl p-4" style={{ border: '1px solid var(--border)' }}>
-                  <p className="text-xs mb-2" style={{ color: '#9ca3af' }}>Bio</p>
-                  <p className="text-sm leading-relaxed" style={{ color: '#374151' }}>{tutor.bio}</p>
+                  <p className="text-xs mb-2" style={{ color: 'var(--text-faint)' }}>Bio</p>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{tutor.bio}</p>
                 </div>
               )}
               <div className="rounded-xl px-4 py-3 text-xs"
@@ -195,8 +195,8 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
             <div className="space-y-3">
               {docs.length === 0 ? (
                 <div className="text-center py-10 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-                  <p className="text-sm" style={{ color: '#9ca3af' }}>No verification documents submitted yet.</p>
-                  <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>
+                  <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No verification documents submitted yet.</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
                     {tutor.verification_submitted
                       ? 'Files were uploaded but paths are missing — check Supabase storage.'
                       : 'The tutor has not completed the verification flow.'}
@@ -214,8 +214,8 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-2xl flex-shrink-0">{/\.pdf$/i.test(d.path) ? '📄' : '🖼'}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#111827' }}>{d.label}</p>
-                          <p className="text-xs truncate" style={{ color: '#9ca3af' }}>{d.path.split('/').pop()}</p>
+                          <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{d.label}</p>
+                          <p className="text-xs truncate" style={{ color: 'var(--text-faint)' }}>{d.path.split('/').pop()}</p>
                         </div>
                       </div>
                       <ViewDocButton storagePath={d.path} />
@@ -235,13 +235,13 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                 </div>
               )}
               {lessons.length === 0
-                ? <p className="text-sm text-center py-10" style={{ color: '#9ca3af' }}>No lessons uploaded yet.</p>
+                ? <p className="text-sm text-center py-10" style={{ color: 'var(--text-faint)' }}>No lessons uploaded yet.</p>
                 : lessons.map(l => (
                     <div key={l.id} className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
                       <div className="flex items-center justify-between px-4 py-3">
                         <div>
-                          <p className="text-sm font-medium" style={{ color: '#111827' }}>{l.title}</p>
-                          <p className="text-xs" style={{ color: '#9ca3af' }}>{l.subject} · {l.form_level} · K{l.price}</p>
+                          <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{l.title}</p>
+                          <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{l.subject} · {l.form_level} · K{l.price}</p>
                         </div>
                         <span className="text-xs px-2.5 py-1 rounded-full capitalize"
                           style={{
@@ -272,13 +272,13 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
             <div className="flex flex-col gap-4 h-full">
               <div className="flex-1 space-y-3 min-h-0">
                 {thread.length === 0
-                  ? <p className="text-xs text-center py-6" style={{ color: '#9ca3af' }}>No notes yet.</p>
+                  ? <p className="text-xs text-center py-6" style={{ color: 'var(--text-faint)' }}>No notes yet.</p>
                   : thread.map(n => (
                       <div key={n.id}
                         className={`max-w-sm rounded-xl px-4 py-3 ${n.author_role === 'admin' ? 'ml-auto' : ''}`}
                         style={{
                           backgroundColor: n.author_role === 'admin' ? 'var(--primary)' : 'var(--bg)',
-                          color: n.author_role === 'admin' ? 'var(--sidebar-text)' : '#374151',
+                          color: n.author_role === 'admin' ? 'var(--sidebar-text)' : 'var(--text)',
                         }}>
                         <p className="text-xs mb-1" style={{ opacity: 0.6 }}>
                           {n.author_role === 'admin' ? 'Admin' : n.profiles?.full_name} ·{' '}
@@ -307,7 +307,7 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
 
         <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
           style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}>
-          <button onClick={onClose} className="text-sm" style={{ color: '#6b7280' }}>Close</button>
+          <button onClick={onClose} className="text-sm" style={{ color: 'var(--text-muted)' }}>Close</button>
           <div className="flex items-center gap-3">
             {rejecting ? (
               <div className="flex items-center gap-2">
@@ -320,7 +320,7 @@ function ApplicationModal({ tutor, onClose, onApprove, onReject }) {
                   style={{ backgroundColor: 'var(--red-bg)', color: 'var(--red-text)' }}>
                   Confirm
                 </button>
-                <button onClick={() => setRejecting(false)} className="text-xs" style={{ color: '#9ca3af' }}>Cancel</button>
+                <button onClick={() => setRejecting(false)} className="text-xs" style={{ color: 'var(--text-faint)' }}>Cancel</button>
               </div>
             ) : (
               <>
@@ -381,20 +381,30 @@ export default function RegistrationsPage() {
   useEffect(() => { load() }, [load])
 
   async function approveTutor(id) {
-    const tutor = tutors.find(t => t.id === id)
-    await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
-    if (tutor?.user_id) {
-      await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.id).eq('status', 'draft')
+    try {
+      const tutor = tutors.find(t => t.id === id)
+      const { error: approveErr } = await supabase.from('tutors').update({ is_approved: true }).eq('id', id)
+      if (approveErr) { console.error('[approveTutor]', approveErr); return }
+      if (tutor?.user_id) {
+        await supabase.from('lessons').update({ status: 'active' }).eq('tutor_id', tutor.id).eq('status', 'draft')
+      }
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('admin_log').insert({ admin_id: user.id, action: 'approve_tutor', target_type: 'tutor', target_id: id })
+    } catch (err) {
+      console.error('[approveTutor]', err)
     }
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('admin_log').insert({ admin_id: user.id, action: 'approve_tutor', target_type: 'tutor', target_id: id })
     load()
   }
 
   async function rejectTutor(id, reason) {
-    await supabase.from('tutors').update({ rejection_reason: reason || 'Application not approved' }).eq('id', id)
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('admin_log').insert({ admin_id: user.id, action: 'reject_tutor', target_type: 'tutor', target_id: id, meta: { reason } })
+    try {
+      const { error: rejectErr } = await supabase.from('tutors').update({ rejection_reason: reason || 'Application not approved' }).eq('id', id)
+      if (rejectErr) { console.error('[rejectTutor]', rejectErr); return }
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('admin_log').insert({ admin_id: user.id, action: 'reject_tutor', target_type: 'tutor', target_id: id, meta: { reason } })
+    } catch (err) {
+      console.error('[rejectTutor]', err)
+    }
     load()
   }
 
@@ -425,7 +435,7 @@ export default function RegistrationsPage() {
                 style={{
                   color: tab === t.key
                     ? t.key === 'approved' ? 'var(--green-text)' : t.key === 'rejected' ? 'var(--red-text)' : 'var(--amber-text)'
-                    : '#9ca3af',
+                    : 'var(--text-faint)',
                 }}>
                 {t.label}
               </p>
@@ -454,7 +464,7 @@ export default function RegistrationsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No {tab} applications.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No {tab} applications.</p>
           </div>
         ) : (
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -475,8 +485,8 @@ export default function RegistrationsPage() {
                       {initials}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium" style={{ color: '#111827' }}>{name}</p>
-                      <p className="text-xs truncate" style={{ color: '#9ca3af' }}>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{name}</p>
+                      <p className="text-xs truncate" style={{ color: 'var(--text-faint)' }}>
                         {(t.subjects ?? []).slice(0, 3).join(', ') || 'No subjects listed'}
                         {t.qualification ? ` · ${t.qualification}` : ''}
                       </p>
@@ -492,10 +502,10 @@ export default function RegistrationsPage() {
                         {docCount} doc{docCount !== 1 ? 's' : ''}
                       </span>
                     )}
-                    <p className="text-xs" style={{ color: '#9ca3af' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                       {new Date(t.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
-                    <span className="text-xs" style={{ color: '#9ca3af' }}>Review →</span>
+                    <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Review →</span>
                   </div>
                 </div>
               )

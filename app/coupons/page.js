@@ -70,13 +70,13 @@ function CouponModal({ coupon, onClose, onSaved }) {
           <h2 className="font-serif text-lg" style={{ color: 'var(--primary)' }}>
             {editing ? 'Edit coupon' : 'New coupon'}
           </h2>
-          <button onClick={onClose} className="text-xl" style={{ color: '#9ca3af' }}>✕</button>
+          <button onClick={onClose} className="text-xl" style={{ color: 'var(--text-faint)' }}>✕</button>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           {/* Code */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Coupon code</label>
+            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Coupon code</label>
             <div className="flex gap-2">
               <input value={code} onChange={e => setCode(e.target.value.toUpperCase())}
                 placeholder="e.g. BACK2SCHOOL"
@@ -84,7 +84,7 @@ function CouponModal({ coupon, onClose, onSaved }) {
                 style={{ border: '1px solid var(--border)' }} />
               <button onClick={generateCode}
                 className="text-xs px-3 py-2 rounded-lg border flex-shrink-0"
-                style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+                style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 Generate
               </button>
             </div>
@@ -93,19 +93,19 @@ function CouponModal({ coupon, onClose, onSaved }) {
           {/* Discount */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Type</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Type</label>
               <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
                 {[{ v: 'percent', l: '% off' }, { v: 'fixed', l: 'K off' }].map(t => (
                   <button key={t.v} onClick={() => setDType(t.v)}
                     className="flex-1 text-xs py-2.5 font-medium transition"
-                    style={dType === t.v ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: '#6b7280' }}>
+                    style={dType === t.v ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: 'var(--text-muted)' }}>
                     {t.l}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
                 Value {dType === 'percent' ? '(%)' : '(ZMW)'}
               </label>
               <input value={value} onChange={e => setValue(e.target.value)} type="number" min="0"
@@ -118,13 +118,13 @@ function CouponModal({ coupon, onClose, onSaved }) {
           {/* Constraints */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Min purchase (K)</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Min purchase (K)</label>
               <input value={minAmt} onChange={e => setMinAmt(e.target.value)} type="number" min="0" placeholder="0 (no minimum)"
                 className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
                 style={{ border: '1px solid var(--border)' }} />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Max uses</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Max uses</label>
               <input value={maxUses} onChange={e => setMaxUses(e.target.value)} type="number" min="1" placeholder="Unlimited"
                 className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
                 style={{ border: '1px solid var(--border)' }} />
@@ -133,13 +133,13 @@ function CouponModal({ coupon, onClose, onSaved }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Expires</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Expires</label>
               <input value={validTo} onChange={e => setValidTo(e.target.value)} type="date"
                 className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
                 style={{ border: '1px solid var(--border)' }} />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Applies to</label>
+              <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Applies to</label>
               <select value={applieTo} onChange={e => setApplieTo(e.target.value)}
                 className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
                 style={{ border: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}>
@@ -152,7 +152,7 @@ function CouponModal({ coupon, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: '#9ca3af' }}>Description (internal)</label>
+            <label className="text-xs font-medium mb-1.5 block uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>Description (internal)</label>
             <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. Back to school promo 2026"
               className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
               style={{ border: '1px solid var(--border)' }} />
@@ -162,7 +162,7 @@ function CouponModal({ coupon, onClose, onSaved }) {
         </div>
 
         <div className="px-6 py-4 flex justify-between" style={{ borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="text-sm" style={{ color: '#6b7280' }}>Cancel</button>
+          <button onClick={onClose} className="text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>
           <button onClick={handleSave} disabled={saving}
             className="text-sm px-5 py-2 rounded-lg font-medium disabled:opacity-50"
             style={{ backgroundColor: 'var(--primary-mid)', color: 'var(--sidebar-text)' }}>
@@ -221,7 +221,7 @@ export default function CouponsPage() {
               { label: 'Total uses',    value: coupons.reduce((s, c) => s + (c.uses_count ?? 0), 0) },
             ].map(s => (
               <div key={s.label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
-                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: '#9ca3af' }}>{s.label}</p>
+                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--text-faint)' }}>{s.label}</p>
                 <p className="font-serif text-2xl font-bold" style={{ color: 'var(--primary)' }}>{s.value}</p>
               </div>
             ))}
@@ -237,7 +237,7 @@ export default function CouponsPage() {
           <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : coupons.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No coupons yet.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No coupons yet.</p>
           </div>
         ) : (
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -245,7 +245,7 @@ export default function CouponsPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Code', 'Discount', 'Uses', 'Applies to', 'Expires', 'Status', ''].map(h =>
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>)}
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -256,18 +256,18 @@ export default function CouponsPage() {
                   return (
                     <tr key={c.id} className="hover:bg-gray-50 transition" style={{ borderBottom: '1px solid var(--border-light)' }}>
                       <td className="px-4 py-3">
-                        <p className="font-mono font-bold" style={{ color: '#111827' }}>{c.code}</p>
-                        {c.description && <p style={{ color: '#9ca3af' }}>{c.description}</p>}
+                        <p className="font-mono font-bold" style={{ color: 'var(--text)' }}>{c.code}</p>
+                        {c.description && <p style={{ color: 'var(--text-faint)' }}>{c.description}</p>}
                       </td>
                       <td className="px-4 py-3 font-semibold" style={{ color: 'var(--primary)' }}>
                         {c.discount_type === 'percent' ? `${c.discount_value}% off` : `K${c.discount_value} off`}
-                        {c.min_amount > 0 && <span style={{ color: '#9ca3af', fontWeight: 'normal' }}> (min K{c.min_amount})</span>}
+                        {c.min_amount > 0 && <span style={{ color: 'var(--text-faint)', fontWeight: 'normal' }}> (min K{c.min_amount})</span>}
                       </td>
-                      <td className="px-4 py-3" style={{ color: '#6b7280' }}>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>
                         {c.uses_count}{c.max_uses ? ` / ${c.max_uses}` : ''}
                       </td>
-                      <td className="px-4 py-3 capitalize" style={{ color: '#6b7280' }}>{c.applies_to}</td>
-                      <td className="px-4 py-3" style={{ color: expired ? 'var(--red-text)' : '#6b7280' }}>
+                      <td className="px-4 py-3 capitalize" style={{ color: 'var(--text-muted)' }}>{c.applies_to}</td>
+                      <td className="px-4 py-3" style={{ color: expired ? 'var(--red-text)' : 'var(--text-muted)' }}>
                         {c.valid_until ? new Date(c.valid_until).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -280,7 +280,7 @@ export default function CouponsPage() {
                         <div className="flex gap-1.5">
                           <button onClick={() => setModal(c)}
                             className="text-xs px-2.5 py-1.5 rounded-lg border"
-                            style={{ borderColor: 'var(--border)', color: '#6b7280' }}>Edit</button>
+                            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>Edit</button>
                           <button onClick={() => toggleActive(c.id, c.is_active)}
                             className="text-xs px-2.5 py-1.5 rounded-lg border"
                             style={{ borderColor: 'var(--border)', color: c.is_active ? 'var(--red-text)' : 'var(--green-text)' }}>

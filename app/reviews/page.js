@@ -82,7 +82,7 @@ export default function ReviewsPage() {
             {FILTER_TABS.map(t => (
               <button key={t.key} onClick={() => setFilter(t.key)}
                 className="text-xs px-4 py-1.5 rounded-lg transition font-medium"
-                style={filter === t.key ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: '#6b7280' }}>
+                style={filter === t.key ? { backgroundColor: 'var(--primary)', color: 'var(--sidebar-text)' } : { color: 'var(--text-muted)' }}>
                 {t.label}
               </button>
             ))}
@@ -97,7 +97,7 @@ export default function ReviewsPage() {
           <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--surface)' }} />)}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No reviews found.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No reviews found.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -110,18 +110,18 @@ export default function ReviewsPage() {
                     {r.flagged && <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--red-bg)', color: 'var(--red-text)' }}>⚑ Flagged</span>}
                     {r.rating <= 2 && <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber-text)' }}>Low</span>}
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ color: '#374151' }}>{r.comment || <em style={{ color: '#9ca3af' }}>No comment</em>}</p>
-                  <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>
-                    <strong style={{ color: '#6b7280' }}>{r.profiles?.full_name ?? '—'}</strong>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{r.comment || <em style={{ color: 'var(--text-faint)' }}>No comment</em>}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
+                    <strong style={{ color: 'var(--text-muted)' }}>{r.profiles?.full_name ?? '—'}</strong>
                     {' → '}
-                    <strong style={{ color: '#6b7280' }}>{r.tutors?.profiles?.full_name ?? '—'}</strong>
+                    <strong style={{ color: 'var(--text-muted)' }}>{r.tutors?.profiles?.full_name ?? '—'}</strong>
                     {' · '}{new Date(r.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
                 <div className="flex flex-col gap-1.5 flex-shrink-0">
                   <button onClick={() => toggleFlag(r.id, r.flagged)}
                     className="text-xs px-3 py-1.5 rounded-lg border transition"
-                    style={r.flagged ? { borderColor: '#fca5a5', color: 'var(--red-text)' } : { borderColor: 'var(--border)', color: '#9ca3af' }}>
+                    style={r.flagged ? { borderColor: '#fca5a5', color: 'var(--red-text)' } : { borderColor: 'var(--border)', color: 'var(--text-faint)' }}>
                     {r.flagged ? 'Unflag' : '⚑ Flag'}
                   </button>
                   <button onClick={() => deleteReview(r.id)} disabled={deleting === r.id}

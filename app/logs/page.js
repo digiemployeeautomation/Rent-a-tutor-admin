@@ -10,7 +10,7 @@ const ACTION_CONFIG = {
   process_payout:      { label: 'Processed payout', icon: '💳', bg: 'var(--blue-bg)',  color: 'var(--blue-text)'  },
   delete_review:       { label: 'Deleted review',   icon: '🗑', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
   resolved_report:     { label: 'Resolved report',  icon: '✓', bg: 'var(--green-bg)',  color: 'var(--green-text)' },
-  dismissed_report:    { label: 'Dismissed report', icon: '—', bg: '#f3f4f6',          color: '#9ca3af'            },
+  dismissed_report:    { label: 'Dismissed report', icon: '—', bg: 'var(--border-light)',          color: 'var(--text-faint)'            },
   under_review_report: { label: 'Under review',     icon: '👁', bg: 'var(--blue-bg)',  color: 'var(--blue-text)'  },
   flag_lesson:         { label: 'Flagged lesson',   icon: '⚑', bg: 'var(--red-bg)',    color: 'var(--red-text)'   },
   unflag_lesson:       { label: 'Unflagged lesson', icon: '⚑', bg: 'var(--green-bg)', color: 'var(--green-text)' },
@@ -115,7 +115,7 @@ export default function LogsPage() {
           ].map(s => (
             <div key={s.label} className="rounded-xl p-4"
               style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <div className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: '#9ca3af' }}>
+              <div className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'var(--text-faint)' }}>
                 {s.label}
               </div>
               <div className="font-serif text-2xl font-bold" style={{ color: 'var(--primary)' }}>
@@ -148,7 +148,7 @@ export default function LogsPage() {
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
               className="text-xs rounded-lg px-3 py-2 outline-none"
               style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)' }} />
-            <span className="text-xs" style={{ color: '#9ca3af' }}>to</span>
+            <span className="text-xs" style={{ color: 'var(--text-faint)' }}>to</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
               className="text-xs rounded-lg px-3 py-2 outline-none"
               style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)' }} />
@@ -169,7 +169,7 @@ export default function LogsPage() {
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-20 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-sm" style={{ color: '#9ca3af' }}>No log entries found.</p>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>No log entries found.</p>
           </div>
         ) : (
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -177,13 +177,13 @@ export default function LogsPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Timestamp', 'Admin', 'Action', 'Target', 'Details'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: '#9ca3af' }}>{h}</th>
+                    <th key={h} className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {logs.map((log, i) => {
-                  const cfg        = ACTION_CONFIG[log.action] ?? { label: log.action, icon: '•', bg: '#f3f4f6', color: '#6b7280' }
+                  const cfg        = ACTION_CONFIG[log.action] ?? { label: log.action, icon: '•', bg: 'var(--border-light)', color: 'var(--text-muted)' }
                   const targetIcon = TARGET_ICONS[log.target_type] ?? '📋'
                   const summary    = metaSummary(log.meta)
                   const isLast     = i === logs.length - 1
@@ -191,11 +191,11 @@ export default function LogsPage() {
                   return (
                     <tr key={log.id} className="hover:bg-gray-50 transition"
                       style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-light)' }}>
-                      <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#9ca3af' }}>
+                      <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--text-faint)' }}>
                         {fmtDateTime(log.created_at)}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-medium" style={{ color: '#111827' }}>
+                        <span className="font-medium" style={{ color: 'var(--text)' }}>
                           {log.profiles?.full_name ?? 'Admin'}
                         </span>
                       </td>
@@ -210,19 +210,19 @@ export default function LogsPage() {
                         <div className="flex items-center gap-1.5">
                           <span>{targetIcon}</span>
                           <div>
-                            <span className="capitalize" style={{ color: '#6b7280' }}>
+                            <span className="capitalize" style={{ color: 'var(--text-muted)' }}>
                               {log.target_type?.replace('_', ' ') ?? '—'}
                             </span>
                             {log.target_id && (
-                              <p className="font-mono" style={{ color: '#9ca3af', fontSize: 10 }}>
+                              <p className="font-mono" style={{ color: 'var(--text-faint)', fontSize: 10 }}>
                                 {String(log.target_id).slice(0, 8)}…
                               </p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3" style={{ color: '#6b7280' }}>
-                        {summary ?? <span style={{ color: '#d1d5db' }}>—</span>}
+                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>
+                        {summary ?? <span style={{ color: 'var(--border)' }}>—</span>}
                       </td>
                     </tr>
                   )
@@ -236,16 +236,16 @@ export default function LogsPage() {
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
               className="text-xs px-4 py-2 rounded-lg border disabled:opacity-40"
-              style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
               ← Prev
             </button>
-            <span className="text-xs" style={{ color: '#9ca3af' }}>
+            <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
               Page {page + 1} of {totalPages}
             </span>
             <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="text-xs px-4 py-2 rounded-lg border disabled:opacity-40"
-              style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
               Next →
             </button>
           </div>

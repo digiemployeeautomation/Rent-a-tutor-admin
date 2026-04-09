@@ -25,15 +25,15 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 const URGENCY_BADGE = {
-  normal:    { label: 'Normal',    bg: '#f3f4f6',                     color: '#6b7280'                       },
+  normal:    { label: 'Normal',    bg: 'var(--border-light)',                     color: 'var(--text-muted)'                       },
   urgent:    { label: 'Urgent',    bg: 'var(--color-stat-b-bg)',       color: 'var(--color-stat-b-sub)'       },
   exam_prep: { label: 'Exam prep', bg: '#fef2f2',                     color: '#dc2626'                       },
 }
 
 const STATUS_BADGE = {
   open:        { label: 'Open',        bg: 'var(--color-stat-a-bg)', color: 'var(--color-badge-text)'  },
-  in_progress: { label: 'In progress', bg: '#eff6ff',                color: '#1d4ed8'                  },
-  covered:     { label: 'Covered',     bg: '#f3f4f6',                color: '#9ca3af'                   },
+  in_progress: { label: 'In progress', bg: 'var(--blue-bg)',                color: 'var(--blue-text)'                  },
+  covered:     { label: 'Covered',     bg: 'var(--border-light)',                color: 'var(--text-faint)'                   },
 }
 
 function ResponseModal({ request, tutorId, onClose, onResponded }) {
@@ -215,8 +215,8 @@ export default function TopicRequestFeed({ tutorId, tutorSubjects = [] }) {
             <button key={f.key} onClick={() => setFilter(f.key)}
               className="text-xs px-3 py-1 rounded-md transition font-medium"
               style={filter === f.key
-                ? { backgroundColor: 'var(--color-primary)', color: 'white' }
-                : { color: '#6b7280' }}>
+                ? { backgroundColor: 'var(--color-primary)', color: 'var(--surface)' }
+                : { color: 'var(--text-muted)' }}>
               {f.label}
             </button>
           ))}
@@ -227,7 +227,7 @@ export default function TopicRequestFeed({ tutorId, tutorSubjects = [] }) {
       {loading ? (
         <div className="space-y-3">
           {[1,2,3].map(i => (
-            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: '#f9fafb' }} />
+            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--border-light)' }} />
           ))}
         </div>
       ) : requests.length === 0 ? (
@@ -259,8 +259,8 @@ export default function TopicRequestFeed({ tutorId, tutorSubjects = [] }) {
               <div key={r.id}
                 className="rounded-xl p-4 border transition"
                 style={{
-                  borderColor: hasReplied ? '#e5e7eb' : r.urgency === 'exam_prep' ? '#fca5a5' : '#e5e7eb',
-                  backgroundColor: hasReplied ? '#fafafa' : 'white',
+                  borderColor: hasReplied ? 'var(--border)' : r.urgency === 'exam_prep' ? '#fca5a5' : 'var(--border)',
+                  backgroundColor: hasReplied ? 'var(--surface)' : 'var(--surface)',
                   opacity: hasReplied ? 0.75 : 1,
                 }}>
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -302,7 +302,7 @@ export default function TopicRequestFeed({ tutorId, tutorSubjects = [] }) {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between text-xs" style={{ color: '#9ca3af' }}>
+                <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-faint)' }}>
                   <span>
                     {r.response_count > 0
                       ? `${r.response_count} tutor${r.response_count !== 1 ? 's' : ''} responded`

@@ -195,7 +195,7 @@ export default function DashboardPage() {
               <Link href="/registrations" className="text-xs" style={{ color: 'var(--primary-lit)' }}>All →</Link>
             </div>
             {pendingTutors.length === 0 ? (
-              <div className="text-center py-6 text-xs" style={{ color: '#9ca3af' }}>All clear ✓</div>
+              <div className="text-center py-6 text-xs" style={{ color: 'var(--text-faint)' }}>All clear ✓</div>
             ) : pendingTutors.map(t => {
               const name     = t.profiles?.full_name ?? 'Tutor'
               const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -209,8 +209,8 @@ export default function DashboardPage() {
                       {initials}
                     </div>
                     <div>
-                      <div className="text-xs font-medium" style={{ color: '#111827' }}>{name}</div>
-                      <div className="text-xs" style={{ color: '#9ca3af' }}>
+                      <div className="text-xs font-medium" style={{ color: 'var(--text)' }}>{name}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-faint)' }}>
                         {(t.subjects ?? []).slice(0, 2).join(', ') || 'No subjects'}
                       </div>
                     </div>
@@ -223,7 +223,7 @@ export default function DashboardPage() {
                     </button>
                     <button onClick={() => rejectTutor(t.id)}
                       className="text-xs px-2.5 py-1.5 rounded-lg border"
-                      style={{ borderColor: 'var(--border)', color: '#6b7280' }}>
+                      style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                       ✕
                     </button>
                   </div>
@@ -239,18 +239,18 @@ export default function DashboardPage() {
               <Link href="/reports" className="text-xs" style={{ color: 'var(--primary-lit)' }}>All →</Link>
             </div>
             {openReports.length === 0 ? (
-              <div className="text-center py-6 text-xs" style={{ color: '#9ca3af' }}>No open reports 🟢</div>
+              <div className="text-center py-6 text-xs" style={{ color: 'var(--text-faint)' }}>No open reports 🟢</div>
             ) : openReports.map(r => (
               <div key={r.id} className="py-2.5 border-b last:border-0"
                 style={{ borderColor: 'var(--border-light)' }}>
                 <div className="flex items-start justify-between gap-2 mb-0.5">
-                  <span className="text-xs font-medium truncate" style={{ color: '#111827' }}>{r.reason}</span>
+                  <span className="text-xs font-medium truncate" style={{ color: 'var(--text)' }}>{r.reason}</span>
                   <span className="text-xs px-1.5 py-0.5 rounded capitalize flex-shrink-0"
                     style={{ backgroundColor: 'var(--amber-bg)', color: 'var(--amber-text)' }}>
                     {r.reported_type}
                   </span>
                 </div>
-                <div className="text-xs" style={{ color: '#9ca3af' }}>
+                <div className="text-xs" style={{ color: 'var(--text-faint)' }}>
                   {new Date(r.created_at).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric' })}
                 </div>
               </div>
@@ -264,17 +264,17 @@ export default function DashboardPage() {
               <Link href="/reviews" className="text-xs" style={{ color: 'var(--primary-lit)' }}>All →</Link>
             </div>
             {recentReviews.length === 0 ? (
-              <div className="text-center py-6 text-xs" style={{ color: '#9ca3af' }}>No reviews yet.</div>
+              <div className="text-center py-6 text-xs" style={{ color: 'var(--text-faint)' }}>No reviews yet.</div>
             ) : recentReviews.map(r => (
               <div key={r.id} className="py-2.5 border-b last:border-0"
                 style={{ borderColor: 'var(--border-light)' }}>
                 <div className="text-xs text-amber-500 mb-0.5">
                   {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
                 </div>
-                <p className="text-xs line-clamp-1" style={{ color: '#4b5563' }}>
+                <p className="text-xs line-clamp-1" style={{ color: 'var(--text-muted)' }}>
                   {r.comment || '(no comment)'}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-faint)' }}>
                   {r.profiles?.full_name} → {r.tutors?.profiles?.full_name}
                 </p>
               </div>
@@ -294,7 +294,7 @@ export default function DashboardPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
                 {['Title', 'Tutor', 'Subject', 'Status'].map(h => (
-                  <th key={h} className="text-left px-5 py-2.5 font-medium" style={{ color: '#9ca3af' }}>{h}</th>
+                  <th key={h} className="text-left px-5 py-2.5 font-medium" style={{ color: 'var(--text-faint)' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -302,9 +302,9 @@ export default function DashboardPage() {
               {recentLessons.map(l => (
                 <tr key={l.id} style={{ borderBottom: '1px solid var(--border-light)' }}
                   className="hover:bg-gray-50 transition">
-                  <td className="px-5 py-3 font-medium truncate max-w-xs" style={{ color: '#111827' }}>{l.title}</td>
-                  <td className="px-5 py-3" style={{ color: '#6b7280' }}>{l.tutors?.profiles?.full_name ?? '—'}</td>
-                  <td className="px-5 py-3" style={{ color: '#6b7280' }}>{l.subject}</td>
+                  <td className="px-5 py-3 font-medium truncate max-w-xs" style={{ color: 'var(--text)' }}>{l.title}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{l.tutors?.profiles?.full_name ?? '—'}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{l.subject}</td>
                   <td className="px-5 py-3">
                     <span className="px-2 py-1 rounded-full capitalize"
                       style={{

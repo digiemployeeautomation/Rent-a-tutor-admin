@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useTheme } from '@/context/ThemeContext'
 
 const NAV = [
   { href: '/dashboard',      icon: '⬡', label: 'Dashboard'        },
@@ -26,6 +27,7 @@ const NAV = [
 export default function Sidebar({ badges = {} }) {
   const pathname  = usePathname()
   const router    = useRouter()
+  const { darkMode, toggleDark } = useTheme()
   const [collapsed, setCollapsed] = useState(false)
 
   async function handleLogout() {
@@ -101,8 +103,17 @@ export default function Sidebar({ badges = {} }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-2 py-3 flex-shrink-0"
+      <div className="px-2 py-3 flex-shrink-0 space-y-0.5"
         style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+        <button onClick={toggleDark}
+          className="flex items-center gap-3 px-2 py-2 rounded-lg w-full text-sm transition-colors hover:opacity-80"
+          style={{ color: 'var(--sidebar-muted)' }}
+          title={collapsed ? (darkMode ? 'Light mode' : 'Dark mode') : undefined}>
+          <span className="w-5 h-5 flex items-center justify-center">
+            {darkMode ? '☀' : '🌙'}
+          </span>
+          {!collapsed && <span style={{ fontSize: 13 }}>{darkMode ? 'Light mode' : 'Dark mode'}</span>}
+        </button>
         <button onClick={handleLogout}
           className="flex items-center gap-3 px-2 py-2 rounded-lg w-full text-sm transition-colors hover:opacity-80"
           style={{ color: 'var(--sidebar-muted)' }}>
